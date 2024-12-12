@@ -24,15 +24,15 @@ import (
 )
 
 type Core struct {
-	Env           string
-	Cfg           *MyConfig
-	RedisCli      *redis.Client
-	RedisCli2     *redis.Client
-	FluentBitUrl  string
-	Wg            sync.WaitGroup
-	RestQueueChan chan *RestQueue
-	OrderChan     chan *private.Order
-	WriteLogChan  chan *WriteLog
+	Env            string
+	Cfg            *MyConfig
+	RedisRemoteCli *redis.Client
+	RedisCli       *redis.Client
+	FluentBitUrl   string
+	Wg             sync.WaitGroup
+	RestQueueChan  chan *RestQueue
+	OrderChan      chan *private.Order
+	WriteLogChan   chan *WriteLog
 }
 type RestQueue struct {
 	InstId   string
