@@ -51,6 +51,17 @@ type MatchCheck struct {
 	Matched bool
 }
 
+func (cd *Candle) Filter(cr *Core) bool {
+	myFocusList := cr.Cfg.Config.Get("focusList").MustArray()
+	founded := false
+	for _, v := range myFocusList {
+		if v.(string) == cd.InstId {
+			founded = true
+			break
+		}
+	}
+	return founded
+}
 func (mc *MatchCheck) SetMatched(value bool) {
 	mc.Matched = value
 }

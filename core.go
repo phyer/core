@@ -119,7 +119,28 @@ func (core *Core) Init() {
 		fmt.Println("init redis client err: ", err)
 	}
 }
+func (core *Core) GetRemoteRedisCli() (*redis.Client, error) {
+	ru := core.Cfg.RedisConf.Url
+	rp := core.Cfg.RedisConf.Password
+	ri := core.Cfg.RedisConf.Index
+	re := os.Getenv("REDIS_URL")
+	if len(re) > 0 {
+		ru = re
+	}
+	client := redis.NewClient(&redis.Options{
+		Addr:     ru,
+		Password: rp, //默认空密码
+		DB:       ri, //使用默认数据库
+	})
+	pong, err := client.Ping().Result()
+	if pong == "PONG" && err == nil {
+		return client, err
+	} else {
+		fmt.Println("redis状态不可用:", ru, rp, ri, err)
+	}
 
+	return client, nil
+}
 func (core *Core) GetRedisCli() (*redis.Client, error) {
 	ru := core.Cfg.RedisConf.Url
 	rp := core.Cfg.RedisConf.Password
@@ -216,6 +237,7 @@ func (core *Core) SubscribeTicker(op string) error {
 	return nil
 }
 
+// 通过接口获取一个币种名下的某个时间范围内的Candle对象集合
 func (core *Core) v5PublicInvoke(subUrl string) (*CandleData, error) {
 	restUrl, _ := core.Cfg.Config.Get("connect").Get("restBaseUrl").String()
 	url := restUrl + subUrl
