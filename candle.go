@@ -15,6 +15,7 @@ import (
 	simple "github.com/bitly/go-simplejson"
 	"github.com/go-redis/redis"
 	"github.com/phyer/texus/utils"
+	logrus "github.com/sirupsen/logrus"
 )
 
 type Candle struct {
@@ -32,32 +33,28 @@ type Candle struct {
 	VolCcy    float64
 	Confirm   bool
 }
-
-type MaX struct {
-	InstID  string        `json:"instID"`
-	Period  string        `json:"period"`
-	KeyName string        `json:"keyName"`
-	Data    []interface{} `json:"data"`
-	Count   int           `json:"count,number"`
-	Ts      int64         `json:"ts,number"`
-	AvgVal  float64       `json:"avgVal,number"`
-	From    string        `json:"from,string"`
+type Sample interface {
+	SetToKey(cr *Core) ([]interface{}, error)
 }
 
+type SampleList interface {
+	// 从左边插入一个元素，把超过长度的元素顶出去
+	RPush(sp Sample) (Sample, error)
+	// 得到一个切片，end一般是0，代表末尾元素，start是负值，-3代表倒数第三个
+	// start：-10, end: -3 代表从倒数第10个到倒数第三个之间的元素组成的切片。
+	GetSectionOf(start int, end int) ([]*Sample, error)
+}
 type CandleList struct {
 	Count          int       `json:"count,number"`
 	LastUpdateTime int64     `json:"lastUpdateTime"`
 	UpdateNickName string    `json:"updateNickName"`
 	List           []*Candle `json:"list"`
 }
-
-type MaXList struct {
-	Count          int    `json:"count"`
-	LastUpdateTime int64  `json:"lastUpdateTime"`
-	UpdateNickName string `json:"updateNickName"`
-	List           []*MaX `json:"list"`
+type CandleSegment struct {
+	StartTime string `json:"startTime"`
+	Enabled   bool   `json:"enabled,bool"`
+	Seg       string `json:"seg"`
 }
-
 type MatchCheck struct {
 	Minutes int64
 	Matched bool
@@ -136,7 +133,7 @@ func (core *Core) GetCandlesWithRest(instId string, kidx int, dura time.Duration
 						WithWs:   true,
 					}
 					js, _ := json.Marshal(restQ)
-					core.RedisCli.LPush("restQueue", js)
+					core.RedisLocalCli.LPush("restQueue", js)
 				}(i)
 				i++
 			}
@@ -291,32 +288,12 @@ func (cl *Candle) ToStruct(core *Core) (*Candle, error) {
 	return &ncd, nil
 }
 
-func (mx *MaX) SetToKey() ([]interface{}, error) {
-	cstr := strconv.Itoa(mx.Count)
-	tss := strconv.FormatInt(mx.Ts, 10)
-	keyName := "ma" + cstr + "|candle" + mx.Period + "|" + mx.InstId + "|ts:" + tss
-	//过期时间：根号(当前candle的周期/1分钟)*10000
-	dt := []interface{}{}
-	dt = append(dt, mx.Ts)
-	dt = append(dt, mx.Value)
-	dj, _ := json.Marshal(dt)
-	exp := mx.Core.PeriodToMinutes(mx.Period)
-	expf := utils.Sqrt(float64(exp)) * 100
-	extt := time.Duration(expf) * time.Minute
-	// loc, _ := time.LoadLocation("Asia/Shanghai")
-	// tm := time.UnixMilli(mx.Ts).In(loc).Format("2006-01-02 15:04")
-	// fmt.Println("setToKey:", keyName, "ts:", tm, string(dj), "from: ", mx.From)
-	_, err := mx.Core.RedisCli.GetSet(keyName, dj).Result()
-	mx.Core.RedisCli.Expire(keyName, extt)
-	return dt, err
-}
-
 // 保证同一个 period, keyName ，在一个周期里，SaveToSortSet只会被执行一次
-func (core *Core) SaveUniKey(period string, keyName string, extt time.Duration, tsi int64, cl *Candle) {
+func (core *Core) SaveUniKey(period string, keyName string, extt time.Duration, tsi int64) {
 
 	refName := keyName + "|refer"
-	refRes, _ := core.RedisCli.GetSet(refName, 1).Result()
-	core.RedisCli.Expire(refName, extt)
+	refRes, _ := core.RedisLocalCli.GetSet(refName, 1).Result()
+	core.RedisLocalCli.Expire(refName, extt)
 	// 为保证唯一性机制，防止SaveToSortSet 被重复执行
 	if len(refRes) != 0 {
 		fmt.Println("refName exist: ", refName)
@@ -334,7 +311,7 @@ func (core *Core) SaveToSortSet(period string, keyName string, extt time.Duratio
 		Score:  float64(tsi),
 		Member: keyName,
 	}
-	rs, err := core.RedisCli.ZAdd(setName, z).Result()
+	rs, err := core.RedisLocalCli.ZAdd(setName, z).Result()
 	if err != nil {
 		fmt.Println("err of ma7|ma30 add to redis:", err)
 	} else {
@@ -342,10 +319,15 @@ func (core *Core) SaveToSortSet(period string, keyName string, extt time.Duratio
 	}
 }
 
-func (cr *Core) PeriodToMinutes(period string) int64 {
+// 根据周期的文本内容，返回这代表多少个分钟
+func (cr *Core) PeriodToMinutes(period string) (int64, error) {
 	ary := strings.Split(period, "")
 	beiStr := "1"
 	danwei := ""
+	if len(ary) == 0 {
+		err := errors.New(utils.GetFuncName() + " period is block")
+		return 0, err
+	}
 	if len(ary) == 3 {
 		beiStr = ary[0] + ary[1]
 		danwei = ary[2]
@@ -388,10 +370,11 @@ func (cr *Core) PeriodToMinutes(period string) int64 {
 		}
 	default:
 		{
-			fmt.Println("notmatch:", danwei)
+			logrus.Warning("notmatch:", danwei, period)
+			panic("notmatch:" + period)
 		}
 	}
-	return int64(cheng)
+	return int64(cheng), nil
 }
 
 // type ScanCmd struct {
@@ -404,7 +387,7 @@ func (cr *Core) PeriodToMinutes(period string) int64 {
 // }
 func (core *Core) GetRangeKeyList(pattern string, from time.Time) ([]*simple.Json, error) {
 	// 比如，用来计算ma30或ma7，倒推多少时间范围，
-	redisCli := core.RedisCli
+	redisCli := core.RedisLocalCli
 	cursor := uint64(0)
 	n := 0
 	allTs := []int64{}
@@ -467,7 +450,10 @@ func (cl *Candle) SetToKey(core *Core) ([]interface{}, error) {
 	//过期时间：根号(当前candle的周期/1分钟)*10000
 
 	dt, err := json.Marshal(cl.Data)
-	exp := core.PeriodToMinutes(cl.Period)
+	exp, err := core.PeriodToMinutes(cl.Period)
+	if err != nil {
+		fmt.Println("err of PeriodToMinutes:", err)
+	}
 	// expf := float64(exp) * 60
 	expf := utils.Sqrt(float64(exp)) * 100
 	extt := time.Duration(expf) * time.Minute
@@ -484,10 +470,10 @@ func (cl *Candle) SetToKey(core *Core) ([]interface{}, error) {
 		err = errors.New("price有问题")
 		return cl.Data, err
 	}
-	redisCli := core.RedisCli
+	redisCli := core.RedisLocalCli
 	// tm := time.UnixMilli(tsi).Format("2006-01-02 15:04")
 	fmt.Println("setToKey:", keyName, "ts: ", "price: ", curPrice, "from:", cl.From)
 	redisCli.Set(keyName, dt, extt).Result()
-	core.SaveUniKey(cl.Period, keyName, extt, tsi, cl)
+	core.SaveUniKey(cl.Period, keyName, extt, tsi)
 	return cl.Data, err
 }

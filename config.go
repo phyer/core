@@ -11,42 +11,42 @@ import (
 )
 
 type MyConfig struct {
-	Env                    string `json:"env", string`
+	Env                    string `json:"env"`
 	Config                 *simple.Json
 	CandleDimentions       []string          `json:"candleDimentions"`
 	RedisConf              *RedisConfig      `json:"redis"`
 	CredentialReadOnlyConf *CredentialConfig `json:"credential"`
-	CredentialMutableConf  *CredentialConfig `json:"credential"`
+	CredentialMutableConf  *CredentialConfig `json:"credentialMutable"`
 	ConnectConf            *ConnectConfig    `json:"connect"`
 	// ThreadsConf    *ThreadsConfig    `json:"threads"`
 }
 
 type RedisConfig struct {
-	Url      string `json:"url", string`
-	Password string `json:"password", string`
-	Index    int    `json:"index", string`
+	Url      string `json:"url"`
+	Password string `json:"password"`
+	Index    int    `json:"index"`
 }
 
 type CredentialConfig struct {
-	SecretKey          string `json:"secretKey", string`
-	BaseUrl            string `json:"baseUrl", string`
-	OkAccessKey        string `json:"okAccessKey", string`
-	OkAccessPassphrase string `json:"okAccessPassphrase", string`
+	SecretKey          string `json:"secretKey"`
+	BaseUrl            string `json:"baseUrl"`
+	OkAccessKey        string `json:"okAccessKey"`
+	OkAccessPassphrase string `json:"okAccessPassphrase"`
 }
 
 type ConnectConfig struct {
-	LoginSubUrl      string `json:"loginSubUrl", string`
-	WsPrivateBaseUrl string `json:"wsPrivateBaseUrl", string`
-	WsPublicBaseUrl  string `json:"wsPublicBaseUrl", string`
-	RestBaseUrl      string `json:"restBaseUrl", string`
+	LoginSubUrl      string `json:"loginSubUrl"`
+	WsPrivateBaseUrl string `json:"wsPrivateBaseUrl"`
+	WsPublicBaseUrl  string `json:"wsPublicBaseUrl"`
+	RestBaseUrl      string `json:"restBaseUrl"`
 }
 type ThreadsConfig struct {
-	MaxLenTickerStream int `json:"maxLenTickerStream", int`
-	MaxCandles         int `json:"maxCandles", string`
-	AsyncChannels      int `json:"asyncChannels", int`
-	MaxTickers         int `json:"maxTickers", int`
-	RestPeriod         int `json:"restPeriod", int`
-	WaitWs             int `json:"waitWs", int`
+	MaxLenTickerStream int `json:"maxLenTickerStream"`
+	MaxCandles         int `json:"maxCandles"`
+	AsyncChannels      int `json:"asyncChannels"`
+	MaxTickers         int `json:"maxTickers"`
+	RestPeriod         int `json:"restPeriod"`
+	WaitWs             int `json:"waitWs"`
 }
 
 func (cfg MyConfig) Init() (MyConfig, error) {
