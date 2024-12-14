@@ -44,6 +44,13 @@ type MaX struct {
 	From    string        `json:"from,string"`
 }
 
+type CandleList struct {
+	Count          int       `json:"count,number"`
+	LastUpdateTime int64     `json:"lastUpdateTime"`
+	UpdateNickName string    `json:"updateNickName"`
+	List           []*Candle `json:"list"`
+}
+
 type MaXList struct {
 	Count          int    `json:"count"`
 	LastUpdateTime int64  `json:"lastUpdateTime"`
