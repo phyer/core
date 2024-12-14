@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	// "v5sdk_go/rest"
 
 	simple "github.com/bitly/go-simplejson"
 	"github.com/go-redis/redis"

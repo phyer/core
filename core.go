@@ -13,11 +13,9 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"v5sdk_go/rest"
-	"v5sdk_go/ws"
-	// "v5sdk_go/ws/wImpl"
 
 	simple "github.com/bitly/go-simplejson"
+	// "v5sdk_go/ws/wImpl"
 	"github.com/go-redis/redis"
 	"github.com/phyer/texus/private"
 	"github.com/phyer/texus/utils"
