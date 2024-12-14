@@ -10,12 +10,11 @@ replace (
 go 1.21
 
 require (
+	github/com/phyer/v5sdkgo v0.1.0
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/phyer/texus v0.0.0-20241207132635-0e7fb63f8196
 	github.com/sirupsen/logrus v1.9.3
-	v5sdk_go/rest v0.0.0-00010101000000-000000000000
-	v5sdk_go/ws v0.0.0-00010101000000-000000000000
 )
 
 require (
