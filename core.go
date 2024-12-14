@@ -24,14 +24,29 @@ import (
 type Core struct {
 	Env            string
 	Cfg            *MyConfig
+	RedisLocalCli  *redis.Client
+	RedisLocal2Cli *redis.Client
 	RedisRemoteCli *redis.Client
-	RedisCli       *redis.Client
 	FluentBitUrl   string
-	Wg             sync.WaitGroup
-	RestQueueChan  chan *RestQueue
-	OrderChan      chan *private.Order
-	WriteLogChan   chan *WriteLog
+	//	PlateMap             map[string]*Plate
+	//	TrayMap              map[string]*Tray
+	CoasterMd5SyncMap    sync.Map
+	Mu                   *sync.Mutex
+	Mu1                  *sync.Mutex
+	Waity                *sync.WaitGroup
+	CandlesProcessChan   chan *Candle
+	MaXProcessChan       chan *MaX
+	TickerInforocessChan chan *TickerInfo
+	//	CoasterChan          chan *CoasterInfo
+	//	SeriesChan           chan *SeriesInfo
+	//	SegmentItemChan      chan *SegmentItem
+	MakeMaXsChan chan *Candle
+	//	ShearForceGrpChan    chan *ShearForceGrp
+	InvokeRestQueueChan chan *RestQueue
+	RestQueue
+	WriteLogChan chan *WriteLog
 }
+
 type RestQueue struct {
 	InstId   string
 	Bar      string
