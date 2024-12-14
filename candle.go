@@ -34,15 +34,21 @@ type Candle struct {
 }
 
 type MaX struct {
-	Core    *Core
-	InstId  string
-	Period  string
-	KeyName string
-	Count   int
-	Ts      int64
-	Value   float64
-	Data    []interface{}
-	From    string
+	InstID  string        `json:"instID"`
+	Period  string        `json:"period"`
+	KeyName string        `json:"keyName"`
+	Data    []interface{} `json:"data"`
+	Count   int           `json:"count,number"`
+	Ts      int64         `json:"ts,number"`
+	AvgVal  float64       `json:"avgVal,number"`
+	From    string        `json:"from,string"`
+}
+
+type MaXList struct {
+	Count          int    `json:"count"`
+	LastUpdateTime int64  `json:"lastUpdateTime"`
+	UpdateNickName string `json:"updateNickName"`
+	List           []*MaX `json:"list"`
 }
 
 type MatchCheck struct {
