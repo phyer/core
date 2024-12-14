@@ -18,6 +18,4 @@ require (
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	v5sdk_go/config v0.0.0-00010101000000-000000000000 // indirect
-	v5sdk_go/utils v0.0.0-00010101000000-000000000000 // indirect
 )
