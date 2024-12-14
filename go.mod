@@ -1,12 +1,5 @@
 module github.com/phyer/core
 
-replace (
-	v5sdk_go/config => ./submodules/okex/config
-	v5sdk_go/rest => ./submodules/okex/rest
-	v5sdk_go/utils => ./submodules/okex/utils
-	v5sdk_go/ws => ./submodules/okex/ws
-)
-
 go 1.21
 
 require (
