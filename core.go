@@ -23,13 +23,13 @@ import (
 )
 
 type Core struct {
-	Env            string
-	Cfg            *MyConfig
-	RedisLocalCli  *redis.Client
-	RedisRemoteCli *redis.Client
-	FluentBitUrl   string
-	//	PlateMap             map[string]*Plate
-	//	TrayMap              map[string]*Tray
+	Env                  string
+	Cfg                  *MyConfig
+	RedisLocalCli        *redis.Client
+	RedisRemoteCli       *redis.Client
+	FluentBitUrl         string
+	PlateMap             map[string]*Plate
+	TrayMap              map[string]*Tray
 	CoasterMd5SyncMap    sync.Map
 	Mu                   *sync.Mutex
 	Mu1                  *sync.Mutex
@@ -713,4 +713,89 @@ func (cr *Core) PeriodToLastTime(period string, from time.Time) (time.Time, erro
 	om := time.UnixMilli(oms)
 	// fmt.Println("PeriodToLastTime: period: ", period, " lastTime:", om.Format("2006-01-02 15:04:05.000"))
 	return om, nil
+}
+
+// setName := "candle" + period + "|" + instId + "|sortedSet"
+// count: 倒推多少个周期开始拿数据
+// from: 倒推的起始时间点
+// ctype: candle或者maX
+func (core *Core) GetRangeCandleSortedSet(setName string, count int, from time.Time) (*CandleList, error) {
+	cdl := CandleList{}
+	ary1 := strings.Split(setName, "|")
+	ary2 := []string{}
+	period := ""
+	ary2 = strings.Split(ary1[0], "candle")
+	period = ary2[1]
+
+	dui, err := core.PeriodToMinutes(period)
+	if err != nil {
+		return nil, err
+	}
+	fromt := from.UnixMilli()
+	nw := time.Now().UnixMilli()
+	if fromt > nw*2 {
+		err := errors.New("时间错了需要debug")
+		logrus.Warning(err.Error())
+		return nil, err
+	}
+	froms := strconv.FormatInt(fromt, 10)
+	sti := fromt - dui*int64(count)*60*1000
+	sts := strconv.FormatInt(sti, 10)
+	opt := redis.ZRangeBy{
+		Min:   sts,
+		Max:   froms,
+		Count: int64(count),
+	}
+	ary := []string{}
+	extt, err := core.GetExpiration(period)
+	ot := time.Now().Add(extt * -1)
+	oti := ot.UnixMilli()
+	cli := core.RedisLocalCli
+	cli.LTrim(setName, 0, oti)
+	cunt, _ := cli.ZRemRangeByScore(setName, "0", strconv.FormatInt(oti, 10)).Result()
+	if cunt > 0 {
+		logrus.Warning("移出过期的引用数量：", setName, count, "ZRemRangeByScore ", setName, 0, strconv.FormatInt(oti, 10))
+	}
+	logrus.Info("ZRevRangeByScore ", setName, opt)
+	ary, err = cli.ZRevRangeByScore(setName, opt).Result()
+	if err != nil {
+		return &cdl, err
+	}
+	keyAry, err := cli.MGet(ary...).Result()
+	if err != nil || len(keyAry) == 0 {
+		logrus.Warning("no record with cmd:  ZRevRangeByScore ", setName, froms, sts, " ", err.Error())
+		logrus.Warning("zrev lens of ary: lens: ", len(ary), "GetRangeSortedSet ZRevRangeByScore:", "setName:", setName, "opt.Max:", opt.Max, "opt.Min:", opt.Min)
+		return &cdl, err
+	}
+	for _, str := range keyAry {
+		if str == nil {
+			continue
+		}
+		cd := Candle{}
+		err := json.Unmarshal([]byte(str.(string)), &cd)
+		if err != nil {
+			logrus.Warn(GetFuncName(), err, str.(string))
+		}
+		tmi := ToInt64(cd.Data[0])
+		tm := time.UnixMilli(tmi)
+		if tm.Sub(from) > 0 {
+			break
+		}
+		cdl.List = append(cdl.List, &cd)
+	}
+	cdl.Count = count
+	return &cdl, nil
+}
+
+func (cr *Core) GetCoasterFromPlate(instID string, period string) (Coaster, error) {
+	// cr.Mu.Lock()
+	// defer cr.Mu.Unlock()
+	pl, ok := cr.PlateMap[instID]
+	if !ok {
+		err := errors.New("instID period not found : " + instID + " " + period)
+		return *new(Coaster), err
+	}
+	co := pl.CoasterMap["period"+period]
+
+	return co, nil
 }

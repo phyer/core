@@ -477,3 +477,67 @@ func (cl *Candle) SetToKey(core *Core) ([]interface{}, error) {
 	core.SaveUniKey(cl.Period, keyName, extt, tsi)
 	return cl.Data, err
 }
+
+// 冒泡排序
+func (cdl *CandleList) RecursiveBubbleS(length int, ctype string) error {
+	if length == 0 {
+		return nil
+	}
+
+	for idx, _ := range cdl.List {
+		if idx >= length-1 {
+			break
+		}
+		temp := Candle{}
+		pre := ToInt64(cdl.List[idx].Data[0])
+		nex := ToInt64(cdl.List[idx+1].Data[0])
+		daoxu := pre < nex
+		if ctype == "asc" {
+			daoxu = !daoxu
+		}
+		if daoxu { //改变成>,换成从小到大排序
+			temp = *cdl.List[idx]
+			cdl.List[idx] = cdl.List[idx+1]
+			cdl.List[idx+1] = &temp
+		}
+	}
+	length--
+	cdl.RecursiveBubbleS(length, ctype)
+	return nil
+}
+
+// TODO 返回的Sample是被弹出队列的元素，如果没有就是nil
+func (cdl *CandleList) RPush(sp *Candle) (Sample, error) {
+	last := Candle{}
+	tsi := ToInt64(sp.Data[0])
+	matched := false
+	// bj, _ := json.Marshal(*sp)
+	cdl.RecursiveBubbleS(len(cdl.List), "asc")
+	for k, v := range cdl.List {
+		if ToInt64(v.Data[0]) == tsi {
+			matched = true
+			cdl.List[k] = sp
+			bj, err := json.Marshal(sp)
+			if err != nil {
+				logrus.Warning("err of convert cdl item:", err)
+			}
+			logrus.Debug("candleList RPush replace: ", string(bj), "v.Data[0]: ", v.Data[0], "tsi:", tsi)
+		}
+	}
+	if matched {
+		return nil, nil
+	}
+	if len(cdl.List) >= cdl.Count {
+		last = *cdl.List[0]
+		cdl.List = cdl.List[1:]
+		cdl.List = append(cdl.List, sp)
+		bj, err := json.Marshal(sp)
+		logrus.Debug("candleList RPush popup: ", string(bj), "len(cdl.List): ", len(cdl.List), "cdl.Count:", cdl.Count)
+		return &last, err
+	} else {
+		cdl.List = append(cdl.List, sp)
+		bj, err := json.Marshal(sp)
+		logrus.Debug("candleList RPush insert: ", string(bj), "len(cdl.List): ", len(cdl.List), "cdl.Count:", cdl.Count)
+		return nil, err
+	}
+}
