@@ -47,8 +47,8 @@ func (co Coaster) RPushSample(cr *Core, sp Sample, ctype string) (*Sample, error
 			now := time.Now().UnixMilli()
 			co.LastUpdateTime = now
 			co.CandleList.LastUpdateTime = now
-			co.UpdateNickName = utils.GetRandomString(12)
-			co.CandleList.UpdateNickName = utils.GetRandomString(12)
+			co.UpdateNickName = GetRandomString(12)
+			co.CandleList.UpdateNickName = GetRandomString(12)
 		}
 		return &sm, err
 	}
@@ -59,7 +59,7 @@ func (co Coaster) RPushSample(cr *Core, sp Sample, ctype string) (*Sample, error
 		if err == nil {
 			now := time.Now().UnixMilli()
 			co.LastUpdateTime = now
-			co.Ma7List.UpdateNickName = utils.GetRandomString(12)
+			co.Ma7List.UpdateNickName = GetRandomString(12)
 			co.Ma7List.LastUpdateTime = now
 		}
 		return &sm, err
@@ -71,7 +71,7 @@ func (co Coaster) RPushSample(cr *Core, sp Sample, ctype string) (*Sample, error
 		if err == nil {
 			now := time.Now().UnixMilli()
 			co.LastUpdateTime = now
-			co.Ma30List.UpdateNickName = utils.GetRandomString(12)
+			co.Ma30List.UpdateNickName = GetRandomString(12)
 			co.Ma30List.LastUpdateTime = now
 		}
 		return &sm, err
@@ -110,12 +110,12 @@ func (coi *CoasterInfo) Process(cr *Core) {
 		}
 		//实例化完一个tray之后，拿着这个tray去执行Analytics方法
 		//
-		srsinfo := SeriesInfo{
-			InstID: curCo.InstID,
-			Period: curCo.Period,
-		}
-
-		cr.SeriesChan <- &srsinfo
+		// srsinfo := SeriesInfo{
+		// 	InstID: curCo.InstID,
+		// 	Period: curCo.Period,
+		// }
+		//
+		// cr.SeriesChan <- &srsinfo
 	}(curCo)
 
 	go func(co Coaster) {
