@@ -21,7 +21,7 @@ import (
 type Candle struct {
 	Id        string `json:"_id"`
 	core      *Core
-	InstId    string
+	InstID    string
 	Period    string
 	Data      []interface{}
 	From      string
@@ -64,7 +64,7 @@ func (cd *Candle) Filter(cr *Core) bool {
 	myFocusList := cr.Cfg.Config.Get("focusList").MustArray()
 	founded := false
 	for _, v := range myFocusList {
-		if v.(string) == cd.InstId {
+		if v.(string) == cd.InstID {
 			founded = true
 			break
 		}
@@ -179,7 +179,7 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 	leng := len(rsp.Data)
 	for _, v := range rsp.Data {
 		candle := Candle{
-			InstId: instId,
+			InstID: instId,
 			Period: period,
 			Data:   v,
 			From:   "rest",
@@ -203,7 +203,7 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 }
 
 func (candle *Candle) PushToWriteLogChan(cr *Core) error {
-	did := candle.InstId + candle.Period + candle.Data[0].(string)
+	did := candle.InstID + candle.Period + candle.Data[0].(string)
 	candle.Id = HashString(did)
 	ncd, _ := candle.ToStruct(cr)
 	fmt.Println("ncd: ", ncd)
@@ -240,7 +240,7 @@ func (cl *Candle) ToStruct(core *Core) (*Candle, error) {
 	ncd := Candle{}
 	ncd.Id = cl.Id
 	ncd.Period = cl.Period
-	ncd.InstId = cl.InstId
+	ncd.InstID = cl.InstID
 	ncd.From = cl.From
 
 	// 将字符串转换为 int64 类型的时间戳
@@ -446,7 +446,7 @@ func (cl *Candle) SetToKey(core *Core) ([]interface{}, error) {
 	data := cl.Data
 	tsi, err := strconv.ParseInt(data[0].(string), 10, 64)
 	tss := strconv.FormatInt(tsi, 10)
-	keyName := "candle" + cl.Period + "|" + cl.InstId + "|ts:" + tss
+	keyName := "candle" + cl.Period + "|" + cl.InstID + "|ts:" + tss
 	//过期时间：根号(当前candle的周期/1分钟)*10000
 
 	dt, err := json.Marshal(cl.Data)

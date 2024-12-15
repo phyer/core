@@ -89,88 +89,89 @@ func (co *Coaster) SetToKey(cr *Core) (string, error) {
 	return res, err
 }
 
-func (coi *CoasterInfo) Process(cr *Core) {
-	curCo, _ := cr.GetCoasterFromPlate(coi.InstID, coi.Period)
-	go func(co Coaster) {
-		//这里执行：创建一个tray对象,用现有的co的数据计算和填充其listMap
-		// TODO 发到一个channel里来执行下面的任务，
-		allow := os.Getenv("SARDINE_MAKESERIES") == "true"
-		if !allow {
-			return
-		}
-		srs, err := co.UpdateTray(cr)
-		if err != nil || srs == nil {
-			logrus.Warn("tray err: ", err)
-			return
-		}
-		_, err = srs.SetToKey(cr)
-		if err != nil {
-			logrus.Warn("srs SetToKey err: ", err)
-			return
-		}
-		//实例化完一个tray之后，拿着这个tray去执行Analytics方法
-		//
-		// srsinfo := SeriesInfo{
-		// 	InstID: curCo.InstID,
-		// 	Period: curCo.Period,
-		// }
-		//
-		// cr.SeriesChan <- &srsinfo
-	}(curCo)
-
-	go func(co Coaster) {
-		// 每3次会有一次触发缓存落盘
-		// run := utils.Shaizi(3)
-		// if run {
-		_, err := co.SetToKey(cr)
-		if err != nil {
-			logrus.Warn("coaster process err: ", err)
-			fmt.Println("coaster SetToKey err: ", err)
-		}
-		// }
-
-	}(curCo)
-}
-
+// func (coi *CoasterInfo) Process(cr *Core) {
+// 	curCo, _ := cr.GetCoasterFromPlate(coi.InstID, coi.Period)
+// 	go func(co Coaster) {
+// 		//这里执行：创建一个tray对象,用现有的co的数据计算和填充其listMap
+// 		// TODO 发到一个channel里来执行下面的任务，
+// 		allow := os.Getenv("SARDINE_MAKESERIES") == "true"
+// 		if !allow {
+// 			return
+// 		}
+// 		srs, err := co.UpdateTray(cr)
+// 		if err != nil || srs == nil {
+// 			logrus.Warn("tray err: ", err)
+// 			return
+// 		}
+// 		_, err = srs.SetToKey(cr)
+// 		if err != nil {
+// 			logrus.Warn("srs SetToKey err: ", err)
+// 			return
+// 		}
+// 		//实例化完一个tray之后，拿着这个tray去执行Analytics方法
+// 		//
+// 		// srsinfo := SeriesInfo{
+// 		// 	InstID: curCo.InstID,
+// 		// 	Period: curCo.Period,
+// 		// }
+// 		//
+// 		// cr.SeriesChan <- &srsinfo
+// 	}(curCo)
+//
+// 	go func(co Coaster) {
+// 		// 每3次会有一次触发缓存落盘
+// 		// run := utils.Shaizi(3)
+// 		// if run {
+// 		_, err := co.SetToKey(cr)
+// 		if err != nil {
+// 			logrus.Warn("coaster process err: ", err)
+// 			fmt.Println("coaster SetToKey err: ", err)
+// 		}
+// 		// }
+//
+// 	}(curCo)
+// }
+//
 // TODO 类似于InsertIntoPlate函数，照猫画虎就行了
-func (co *Coaster) UpdateTray(cr *Core) (*Series, error) {
-	cr.Mu1.Lock()
-	defer cr.Mu1.Unlock()
-	//尝试从内存读取tray对象
-	tr, trayFounded := cr.TrayMap[co.InstID]
-	if !trayFounded {
-		tr1, err := co.LoadTray(cr)
-		if err != nil {
-			return nil, err
-		}
-		cr.TrayMap[co.InstID] = tr1
-		tr = tr1
-	}
-	srs, seriesFounded := tr.SeriesMap["period"+co.Period]
-	err := errors.New("")
-	if !seriesFounded {
-		srs1, err := tr.NewSeries(cr, co.Period)
-		if err != nil {
-			return nil, err
-		}
-		tr.SeriesMap["period"+co.Period] = srs1
-	} else {
-		err = srs.Refresh(cr)
-	}
-	// if err == nil {
-	// bj, _ := json.Marshal(srs)
-	// logrus.Debug("series:,string"(bj))
-	// }
-	return srs, err
-}
-
+//
+//	func (co *Coaster) UpdateTray(cr *Core) (*Series, error) {
+//		cr.Mu1.Lock()
+//		defer cr.Mu1.Unlock()
+//		//尝试从内存读取tray对象
+//		tr, trayFounded := cr.TrayMap[co.InstID]
+//		if !trayFounded {
+//			tr1, err := co.LoadTray(cr)
+//			if err != nil {
+//				return nil, err
+//			}
+//			cr.TrayMap[co.InstID] = tr1
+//			tr = tr1
+//		}
+//		srs, seriesFounded := tr.SeriesMap["period"+co.Period]
+//		err := errors.New("")
+//		if !seriesFounded {
+//			srs1, err := tr.NewSeries(cr, co.Period)
+//			if err != nil {
+//				return nil, err
+//			}
+//			tr.SeriesMap["period"+co.Period] = srs1
+//		} else {
+//			err = srs.Refresh(cr)
+//		}
+//		// if err == nil {
+//		// bj, _ := json.Marshal(srs)
+//		// logrus.Debug("series:,string"(bj))
+//		// }
+//		return srs, err
+//	}
+//
 // TODO
-func (co *Coaster) LoadTray(cr *Core) (*Tray, error) {
-	tray := Tray{}
-	tray.Init(co.InstID)
-	prs := cr.Cfg.Config.Get("candleDimentions").MustArray()
-	for _, v := range prs {
-		tray.NewSeries(cr, v.(string))
-	}
-	return &tray, nil
-}
+// func (co *Coaster) LoadTray(cr *Core) (*Tray, error) {
+// 	tray := Tray{}
+// 	tray.Init(co.InstID)
+// 	prs := cr.Cfg.Config.Get("candleDimentions").MustArray()
+// 	for _, v := range prs {
+// 		tray.NewSeries(cr, v.(string))
+// 	}
+// 	return &tray, nil
+// }
