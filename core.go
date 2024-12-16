@@ -136,6 +136,23 @@ func (core *Core) Init() {
 		fmt.Println("init redis client err: ", err)
 	}
 }
+
+func (core *Core) GetRedisCliFromConf(conf RedisConfig) (*redis.Client, error) {
+	client := redis.NewClient(&redis.Options{
+		Addr:     conf.Url,
+		Password: conf.Password, //默认空密码
+		DB:       conf.Index,    //使用默认数据库
+	})
+	pong, err := client.Ping().Result()
+	if pong == "PONG" && err == nil {
+		return client, err
+	} else {
+		fmt.Println("redis状态不可用:", conf.Url, conf.Password, conf.Index, err)
+	}
+
+	return client, nil
+}
+
 func (core *Core) GetRemoteRedisLocalCli() (*redis.Client, error) {
 	ru := core.Cfg.RedisConf.Url
 	rp := core.Cfg.RedisConf.Password
