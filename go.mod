@@ -6,6 +6,7 @@ require (
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/phyer/texus v0.0.0-20241207132635-0e7fb63f8196
+	github.com/phyer/v5sdkgo v0.1.4
 	github.com/sirupsen/logrus v1.9.3
 )
 
