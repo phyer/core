@@ -182,11 +182,11 @@ func (core *Core) GetRedisLocalCli() (*redis.Client, error) {
 }
 
 // 这些应该是放到 texus 里实现的
-// func (core *Core) GetAllTickerInfo() (*rest.RESTAPIResult, error) {
-// 	// GET / 获取所有产品行情信息
-// 	rsp, err := core.RestInvoke("/api/v5/market/tickers?instType=SPOT", rest.GET)
-// 	return rsp, err
-// }
+func (core *Core) GetAllTickerInfo() (*rest.RESTAPIResult, error) {
+	// GET / 获取所有产品行情信息
+	rsp, err := core.RestInvoke("/api/v5/market/tickers?instType=SPOT", rest.GET)
+	return rsp, err
+}
 
 // 这些跟 订单有关，都关掉
 //
@@ -277,24 +277,24 @@ func (core *Core) v5PublicInvoke(subUrl string) (*CandleData, error) {
 	return &result, nil
 }
 
-// func (core *Core) RestInvoke(subUrl string, method string) (*rest.RESTAPIResult, error) {
-// 	restUrl, _ := core.Cfg.Config.Get("connect").Get("restBaseUrl").String()
-// 	//ep, method, uri string, param *map[string]interface{}
-// 	rest := rest.NewRESTAPI(restUrl, method, subUrl, nil)
-// 	key, _ := core.Cfg.Config.Get("credentialReadOnly").Get("okAccessKey").String()
-// 	secure, _ := core.Cfg.Config.Get("credentialReadOnly").Get("secretKey").String()
-// 	pass, _ := core.Cfg.Config.Get("credentialReadOnly").Get("okAccessPassphrase").String()
-// 	isDemo := false
-// 	if core.Env == "demoEnv" {
-// 		isDemo = true
-// 	}
-// 	rest.SetSimulate(isDemo).SetAPIKey(key, secure, pass)
-// 	response, err := rest.Run(context.Background())
-// 	if err != nil {
-// 		fmt.Println("restInvoke1 err:", subUrl, err)
-// 	}
-// 	return response, err
-// }
+func (core *Core) RestInvoke(subUrl string, method string) (*rest.RESTAPIResult, error) {
+	restUrl, _ := core.Cfg.Config.Get("connect").Get("restBaseUrl").String()
+	//ep, method, uri string, param *map[string]interface{}
+	rest := rest.NewRESTAPI(restUrl, method, subUrl, nil)
+	key, _ := core.Cfg.Config.Get("credentialReadOnly").Get("okAccessKey").String()
+	secure, _ := core.Cfg.Config.Get("credentialReadOnly").Get("secretKey").String()
+	pass, _ := core.Cfg.Config.Get("credentialReadOnly").Get("okAccessPassphrase").String()
+	isDemo := false
+	if core.Env == "demoEnv" {
+		isDemo = true
+	}
+	rest.SetSimulate(isDemo).SetAPIKey(key, secure, pass)
+	response, err := rest.Run(context.Background())
+	if err != nil {
+		fmt.Println("restInvoke1 err:", subUrl, err)
+	}
+	return response, err
+}
 
 // func (core *Core) RestInvoke2(subUrl string, method string, param *map[string]interface{}) (*rest.RESTAPIResult, error) {
 // 	key, err1 := core.Cfg.Config.Get("credentialReadOnly").Get("okAccessKey").String()
