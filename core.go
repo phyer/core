@@ -402,14 +402,14 @@ func (core *Core) GetMyFavorList() []string {
 // 改了，不需要交易排行榜，我手动指定一个排行即可, tickersVol|sortedSet 改成 tickersList|sortedSet
 func (core *Core) GetScoreList(count int) []string {
 
-	redisCli := core.RedisLocalCli
-
-	curList, err := redisCli.ZRange("tickersList|sortedSet", 0, int64(count-1)).Result()
-	if err != nil {
-		fmt.Println("zrevrange err:", err)
+	// redisCli := core.RedisLocalCli
+	myFocusList := core.Cfg.Config.Get("focusList").MustArray()
+	fmt.Println("curList: ", myFocusList)
+	lst := []string{}
+	for _, v := range myFocusList {
+		lst = append(lst, v.(string))
 	}
-	fmt.Println("curList: ", curList)
-	return curList
+	return lst
 }
 
 // 跟订单有关，关掉
