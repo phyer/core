@@ -249,7 +249,7 @@ func (cl *Candle) ToStruct(core *Core) (*Candle, error) {
 		fmt.Println("Error parsing timestamp:", err)
 		return nil, err
 	}
-	ncd.Timestamp = time.Unix(ts/1000, (ts%1000)*1000000) // 纳秒级别
+	ncd.Timestamp = time.Unix(ts/1000, (ts%1000)*1000000000) // 纳秒级别
 	op, err := strconv.ParseFloat(cl.Data[1].(string), 64)
 	if err != nil {
 		fmt.Println("Error parsing string to float64:", err)
