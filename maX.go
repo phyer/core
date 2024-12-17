@@ -18,14 +18,15 @@ type MaXList struct {
 }
 
 type MaX struct {
-	InstID  string        `json:"instID"`
-	Period  string        `json:"period"`
-	KeyName string        `json:"keyName"`
-	Data    []interface{} `json:"data"`
-	Count   int           `json:"count,number"`
-	Ts      int64         `json:"ts,number"`
-	AvgVal  float64       `json:"avgVal,number"`
-	From    string        `json:"from,string"`
+	InstID    string        `json:"instID"`
+	Period    string        `json:"period"`
+	Timestamp time.Time     `json:"timestamp"`
+	KeyName   string        `json:"keyName"`
+	Data      []interface{} `json:"data"`
+	Count     int           `json:"count,number"`
+	Ts        int64         `json:"ts,number"`
+	AvgVal    float64       `json:"avgVal,number"`
+	From      string        `json:"from,string"`
 }
 
 type WillMX struct {
@@ -35,6 +36,7 @@ type WillMX struct {
 
 func (mx MaX) SetToKey(cr *Core) ([]interface{}, error) {
 	// fmt.Println(utils.GetFuncName(), " step1 ", mx.InstID, " ", mx.Period)
+	mx.Timestamp, _ = Int64ToTime(mx.Ts)
 	cstr := strconv.Itoa(mx.Count)
 	tss := strconv.FormatInt(mx.Ts, 10)
 	//校验时间戳是否合法
@@ -71,6 +73,20 @@ func (mx MaX) SetToKey(cr *Core) ([]interface{}, error) {
 	return mx.Data, err
 }
 
+func Int64ToTime(ts int64) (time.Time, error) {
+	timestamp := int64(ts)
+	// 将时间戳转换为 time.Time 类型，单位为秒
+	t := time.Unix(timestamp/1000, (timestamp%1000)*int64(time.Millisecond))
+	// 获取东八区（北京时间）的时区信息
+	loc, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		fmt.Println("加载时区失败:", err)
+		return t, err
+	}
+	// 将时间转换为东八区时间
+	t = t.In(loc)
+	return t, nil
+}
 func (mx *MaX) PushToWriteLogChan(cr *Core) error {
 	s := strconv.FormatFloat(float64(mx.Ts), 'f', 0, 64)
 	did := mx.InstID + mx.Period + s
