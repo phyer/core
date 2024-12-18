@@ -80,7 +80,7 @@ func (mx MaX) SetToKey(cr *Core) ([]interface{}, error) {
 func Int64ToTime(ts int64) (time.Time, error) {
 	timestamp := int64(ts)
 	// 将时间戳转换为 time.Time 类型，单位为秒
-	t := time.Unix(timestamp, (timestamp%1000)*int64(time.Millisecond))
+	t := time.Unix(timestamp/1000, (timestamp%1000)*int64(time.Millisecond))
 	// 获取东八区（北京时间）的时区信息
 	loc, err := time.LoadLocation("Asia/Shanghai")
 	if err != nil {
