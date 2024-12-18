@@ -459,6 +459,9 @@ func (cl *Candle) SetToKey(core *Core) ([]interface{}, error) {
 	//过期时间：根号(当前candle的周期/1分钟)*10000
 	cl.LastUpdate = time.Now()
 	dt, err := json.Marshal(cl)
+	if err != nil {
+		fmt.Println("candle Save to String err:", err)
+	}
 	fmt.Println("candle Save to String: ", string(dt))
 	exp, err := core.PeriodToMinutes(cl.Period)
 	if err != nil {
