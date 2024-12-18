@@ -18,15 +18,16 @@ type MaXList struct {
 }
 
 type MaX struct {
-	InstID    string        `json:"instID"`
-	Period    string        `json:"period"`
-	Timestamp time.Time     `json:"timestamp"`
-	KeyName   string        `json:"keyName"`
-	Data      []interface{} `json:"data"`
-	Count     int           `json:"count,number"`
-	Ts        int64         `json:"ts,number"`
-	AvgVal    float64       `json:"avgVal,number"`
-	From      string        `json:"from,string"`
+	InstID     string        `json:"instID"`
+	Period     string        `json:"period"`
+	Timestamp  time.Time     `json:"timestamp"`
+	LastUpdate time.Time     `json:"lastUpdate"`
+	KeyName    string        `json:"keyName"`
+	Data       []interface{} `json:"data"`
+	Count      int           `json:"count,number"`
+	Ts         int64         `json:"ts,number"`
+	AvgVal     float64       `json:"avgVal,number"`
+	From       string        `json:"from,string"`
 }
 
 type WillMX struct {

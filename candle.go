@@ -19,19 +19,20 @@ import (
 )
 
 type Candle struct {
-	Id        string `json:"_id"`
-	core      *Core
-	InstID    string
-	Period    string
-	Data      []interface{}
-	From      string
-	Timestamp time.Time
-	Open      float64
-	High      float64
-	Low       float64
-	Close     float64
-	VolCcy    float64
-	Confirm   bool
+	Id         string `json:"_id"`
+	core       *Core
+	InstID     string
+	Period     string
+	Data       []interface{}
+	From       string
+	Timestamp  time.Time
+	LastUpdate time.Time `json:"lastUpdate"`
+	Open       float64
+	High       float64
+	Low        float64
+	Close      float64
+	VolCcy     float64
+	Confirm    bool
 }
 type Sample interface {
 	SetToKey(cr *Core) ([]interface{}, error)
