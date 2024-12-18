@@ -49,7 +49,10 @@ func (mx MaX) SetToKey(cr *Core) ([]interface{}, error) {
 	}
 	keyName := "ma" + cstr + "|candle" + mx.Period + "|" + mx.InstID + "|ts:" + tss
 	//过期时间：根号(当前candle的周期/1分钟)*10000
-	dj, _ := json.Marshal(mx)
+	dj, err := json.Marshal(mx)
+	if err != nil {
+		fmt.Println("maX SetToKey json marshal err: ", err)
+	}
 	extt, err := cr.GetExpiration(mx.Period)
 	if err != nil {
 		fmt.Println("max SetToKey err: ", err)
