@@ -187,10 +187,7 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 			From:       "rest",
 			LastUpdate: time.Now(),
 		}
-		data := candle.Data
-		tsi, _ := strconv.ParseInt(data[0].(string), 10, 64)
-		tm, _ := Int64ToTime(tsi)
-		candle.Timestamp = tm
+
 		//存到elasticSearch
 		candle.PushToWriteLogChan(core)
 		//保存rest得到的candle
@@ -214,7 +211,10 @@ func (candle *Candle) PushToWriteLogChan(cr *Core) error {
 	candle.Id = HashString(did)
 	ncd, _ := candle.ToStruct(cr)
 	fmt.Println("ncd: ", ncd)
-	cd, _ := json.Marshal(ncd)
+	cd, err := json.Marshal(ncd)
+	if err != nil {
+		fmt.Println("PushToWriteLog json marshal candle err: ", err)
+	}
 	candle = ncd
 	wg := WriteLog{
 		Content: cd,
