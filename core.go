@@ -584,6 +584,7 @@ func (cr *Core) ProcessOrder(od *private.Order) error {
 func (cr *Core) AddToGeneralCandleChnl(candle *Candle, channels []string) {
 	redisCli := cr.RedisLocalCli
 	ab, _ := json.Marshal(candle)
+	fmt.Println("ab: ", string(ab))
 	for _, v := range channels {
 		suffix := ""
 		env := os.Getenv("GO_ENV")
