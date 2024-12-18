@@ -181,10 +181,11 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 	for _, v := range rsp.Data {
 
 		candle := Candle{
-			InstID: instId,
-			Period: period,
-			Data:   v,
-			From:   "rest",
+			InstID:     instId,
+			Period:     period,
+			Data:       v,
+			From:       "rest",
+			LastUpdate: time.Now(),
 		}
 		data := candle.Data
 		tsi, _ := strconv.ParseInt(data[0].(string), 10, 64)
