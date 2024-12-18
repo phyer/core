@@ -179,12 +179,14 @@ func IsModOf(curInt int64, duration time.Duration) bool {
 func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura time.Duration, withWs bool) {
 	leng := len(rsp.Data)
 	for _, v := range rsp.Data {
-
+		tmi := ToInt64(v[0])
+		ts, _ := Int64ToTime(tmi)
 		candle := Candle{
 			InstID:     instId,
 			Period:     period,
 			Data:       v,
 			From:       "rest",
+			Timestamp:  ts,
 			LastUpdate: time.Now(),
 		}
 
