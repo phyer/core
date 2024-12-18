@@ -48,6 +48,7 @@ func (mx MaX) SetToKey(cr *Core) ([]interface{}, error) {
 	}
 	keyName := "ma" + cstr + "|candle" + mx.Period + "|" + mx.InstID + "|ts:" + tss
 	//过期时间：根号(当前candle的周期/1分钟)*10000
+
 	dj, err := json.Marshal(mx)
 	if err != nil {
 		fmt.Println("maX SetToKey json marshal err: ", err)
@@ -102,6 +103,7 @@ func (mx *MaX) PushToWriteLogChan(cr *Core) error {
 	mx0.Ts = mx.Ts
 	mx0.AvgVal = mx.AvgVal
 	mx0.LastUpdate = mx.LastUpdate
+	mx0.Timestamp = mx.Timestamp
 	hs := HashString(did)
 	md, _ := json.Marshal(mx0)
 	mx = &mx0
