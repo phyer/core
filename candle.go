@@ -457,9 +457,12 @@ func (cl *Candle) SetToKey(core *Core) ([]interface{}, error) {
 	data := cl.Data
 	tsi, err := strconv.ParseInt(data[0].(string), 10, 64)
 	tss := strconv.FormatInt(tsi, 10)
+	tm, _ := Int64ToTime(tsi)
+
 	keyName := "candle" + cl.Period + "|" + cl.InstID + "|ts:" + tss
 	//过期时间：根号(当前candle的周期/1分钟)*10000
 	cl.LastUpdate = time.Now()
+	cl.Timestamp = tm
 	dt, err := json.Marshal(cl)
 	if err != nil {
 		fmt.Println("candle Save to String err:", err)
