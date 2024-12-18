@@ -102,6 +102,7 @@ func (mx *MaX) PushToWriteLogChan(cr *Core) error {
 	mx0.LastUpdate = mx.LastUpdate
 	hs := HashString(did)
 	md, _ := json.Marshal(mx0)
+	mx = &mx0
 	wg := WriteLog{
 		Content: md,
 		Tag:     "sardine.log.maX." + mx0.Period,

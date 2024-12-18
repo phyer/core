@@ -215,6 +215,7 @@ func (candle *Candle) PushToWriteLogChan(cr *Core) error {
 	ncd, _ := candle.ToStruct(cr)
 	fmt.Println("ncd: ", ncd)
 	cd, _ := json.Marshal(ncd)
+	candle = ncd
 	wg := WriteLog{
 		Content: cd,
 		Tag:     "sardine.log.candle." + candle.Period,
