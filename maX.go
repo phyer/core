@@ -99,6 +99,7 @@ func (mx *MaX) PushToWriteLogChan(cr *Core) error {
 	mx0.Count = mx.Count
 	mx0.Ts = mx.Ts
 	mx0.AvgVal = mx.AvgVal
+	mx0.LastUpdate = mx.LastUpdate
 	hs := HashString(did)
 	md, _ := json.Marshal(mx0)
 	wg := WriteLog{

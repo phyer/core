@@ -249,6 +249,7 @@ func (cl *Candle) ToStruct(core *Core) (*Candle, error) {
 	ncd.Period = cl.Period
 	ncd.InstID = cl.InstID
 	ncd.From = cl.From
+	ncd.LastUpdate = cl.LastUpdate
 
 	// 将字符串转换为 int64 类型的时间戳
 	ts, err := strconv.ParseInt(cl.Data[0].(string), 10, 64)
