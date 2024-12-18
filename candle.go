@@ -178,12 +178,17 @@ func IsModOf(curInt int64, duration time.Duration) bool {
 func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura time.Duration, withWs bool) {
 	leng := len(rsp.Data)
 	for _, v := range rsp.Data {
+
 		candle := Candle{
 			InstID: instId,
 			Period: period,
 			Data:   v,
 			From:   "rest",
 		}
+		data := candle.Data
+		tsi, _ := strconv.ParseInt(data[0].(string), 10, 64)
+		tm, _ := Int64ToTime(tsi)
+		candle.Timestamp = tm
 		//存到elasticSearch
 		candle.PushToWriteLogChan(core)
 		//保存rest得到的candle
