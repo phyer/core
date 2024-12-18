@@ -455,7 +455,7 @@ func (cl *Candle) SetToKey(core *Core) ([]interface{}, error) {
 	tss := strconv.FormatInt(tsi, 10)
 	keyName := "candle" + cl.Period + "|" + cl.InstID + "|ts:" + tss
 	//过期时间：根号(当前candle的周期/1分钟)*10000
-
+	cl.LastUpdate = time.Now()
 	dt, err := json.Marshal(cl)
 	exp, err := core.PeriodToMinutes(cl.Period)
 	if err != nil {
