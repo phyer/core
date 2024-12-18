@@ -38,7 +38,6 @@ type WillMX struct {
 func (mx MaX) SetToKey(cr *Core) ([]interface{}, error) {
 	// fmt.Println(utils.GetFuncName(), " step1 ", mx.InstID, " ", mx.Period)
 	mx.Timestamp, _ = Int64ToTime(mx.Ts)
-	mx.LastUpdate = time.Now()
 	cstr := strconv.Itoa(mx.Count)
 	tss := strconv.FormatInt(mx.Ts, 10)
 	//校验时间戳是否合法
