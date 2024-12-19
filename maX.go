@@ -51,25 +51,25 @@ func (mx MaX) SetToKey(cr *Core) ([]interface{}, error) {
 
 	dj, err := json.Marshal(mx)
 	if err != nil {
-		fmt.Println("maX SetToKey json marshal err: ", err)
+		logrus.Error("maX SetToKey json marshal err: ", err)
 	}
 	extt, err := cr.GetExpiration(mx.Period)
 	if err != nil {
-		fmt.Println("max SetToKey err: ", err)
+		logrus.Error("max SetToKey err: ", err)
 		return mx.Data, err
 	}
 	// fmt.Println(utils.GetFuncName(), " step2 ", mx.InstID, " ", mx.Period)
 	// tm := time.UnixMilli(mx.Ts).Format("01-02 15:04")
 	cli := cr.RedisLocalCli
 	if len(string(dj)) == 0 {
-		fmt.Println("mx data is block data: ", mx, string(dj))
+		logrus.Error("mx data is block data: ", mx, string(dj))
 		err := errors.New("data is block")
 		return mx.Data, err
 	}
 	// fmt.Println(utils.GetFuncName(), " step3 ", mx.InstID, " ", mx.Period)
 	_, err = cli.Set(keyName, dj, extt).Result()
 	if err != nil {
-		fmt.Println(GetFuncName(), " maXSetToKey err:", err)
+		logrus.Error(GetFuncName(), " maXSetToKey err:", err)
 		return mx.Data, err
 	}
 	// fmt.Println(utils.GetFuncName(), " step4 ", mx.InstID, " ", mx.Period)
@@ -85,7 +85,7 @@ func Int64ToTime(ts int64) (time.Time, error) {
 	// 获取东八区（北京时间）的时区信息
 	loc, err := time.LoadLocation("Asia/Shanghai")
 	if err != nil {
-		fmt.Println("加载时区失败:", err)
+		logrus.Error("加载时区失败:", err)
 		return t, err
 	}
 	// 将时间转换为东八区时间
@@ -95,7 +95,7 @@ func Int64ToTime(ts int64) (time.Time, error) {
 func (mx *MaX) PushToWriteLogChan(cr *Core) error {
 	s := strconv.FormatFloat(float64(mx.Ts), 'f', 0, 64)
 	did := mx.InstID + mx.Period + s
-	fmt.Println("did of max:", did)
+	logrus.Error("did of max:", did)
 	mx0 := MaX{}
 	mx0.InstID = mx.InstID
 	mx0.Period = mx.Period

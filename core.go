@@ -71,7 +71,7 @@ type SubAction struct {
 }
 
 func (rst *RestQueue) Show(cr *Core) {
-	fmt.Println("restQueue:", rst.InstId, rst.Bar, rst.Limit)
+	logrus.Info("restQueue:", rst.InstId, rst.Bar, rst.Limit)
 }
 
 func (rst *RestQueue) Save(cr *Core) {
@@ -89,12 +89,12 @@ func (rst *RestQueue) Save(cr *Core) {
 	}
 	link := "/api/v5/market/candles?instId=" + rst.InstId + "&bar=" + rst.Bar + limitSec + afterSec + beforeSec
 
-	fmt.Println("restLink: ", link)
+	logrus.Info("restLink: ", link)
 	rsp, err := cr.v5PublicInvoke(link)
 	if err != nil {
-		fmt.Println("cr.v5PublicInvoke err:", err)
+		logrus.Info("cr.v5PublicInvoke err:", err)
 	} else {
-		fmt.Println("cr.v5PublicInvoke result count:", len(rsp.Data))
+		logrus.Info("cr.v5PublicInvoke result count:", len(rsp.Data))
 	}
 	cr.SaveCandle(rst.InstId, rst.Bar, rsp, rst.Duration, rst.WithWs)
 }
@@ -103,7 +103,7 @@ func WriteLogProcess(cr *Core) {
 	for {
 		wg := <-cr.WriteLogChan
 		go func(wg *WriteLog) {
-			fmt.Println("start writelog: " + wg.Tag + " " + wg.Id)
+			logrus.Info("start writelog: " + wg.Tag + " " + wg.Id)
 			wg.Process(cr)
 		}(wg)
 		time.Sleep(50 * time.Millisecond)
@@ -120,9 +120,9 @@ func (core *Core) Init() {
 	gitBranch := os.Getenv("gitBranchName")
 	commitID := os.Getenv("gitCommitID")
 
-	fmt.Println("当前环境: ", core.Env)
-	fmt.Println("gitBranch: ", gitBranch)
-	fmt.Println("gitCommitID: ", commitID)
+	logrus.Info("当前环境: ", core.Env)
+	logrus.Info("gitBranch: ", gitBranch)
+	logrus.Info("gitCommitID: ", commitID)
 	cfg := MyConfig{}
 	cfg, _ = cfg.Init()
 	core.Cfg = &cfg
@@ -133,7 +133,7 @@ func (core *Core) Init() {
 	// 跟订单有关的都关掉
 	// core.OrderChan = make(chan *private.Order)
 	if err != nil {
-		fmt.Println("init redis client err: ", err)
+		logrus.Error("init redis client err: ", err)
 	}
 }
 
@@ -147,7 +147,7 @@ func (core *Core) GetRedisCliFromConf(conf RedisConfig) (*redis.Client, error) {
 	if pong == "PONG" && err == nil {
 		return client, err
 	} else {
-		fmt.Println("redis状态不可用:", conf.Url, conf.Password, conf.Index, err)
+		logrus.Error("redis状态不可用:", conf.Url, conf.Password, conf.Index, err)
 	}
 
 	return client, nil
@@ -170,7 +170,7 @@ func (core *Core) GetRemoteRedisLocalCli() (*redis.Client, error) {
 	if pong == "PONG" && err == nil {
 		return client, err
 	} else {
-		fmt.Println("redis状态不可用:", ru, rp, ri, err)
+		logrus.Error("redis状态不可用:", ru, rp, ri, err)
 	}
 
 	return client, nil
@@ -192,7 +192,7 @@ func (core *Core) GetRedisLocalCli() (*redis.Client, error) {
 	if pong == "PONG" && err == nil {
 		return client, err
 	} else {
-		fmt.Println("redis状态不可用:", ru, rp, ri, err)
+		logrus.Error("redis状态不可用:", ru, rp, ri, err)
 	}
 
 	return client, nil
@@ -308,7 +308,7 @@ func (core *Core) RestInvoke(subUrl string, method string) (*rest.RESTAPIResult,
 	rest.SetSimulate(isDemo).SetAPIKey(key, secure, pass)
 	response, err := rest.Run(context.Background())
 	if err != nil {
-		fmt.Println("restInvoke1 err:", subUrl, err)
+		logrus.Error("restInvoke1 err:", subUrl, err)
 	}
 	return response, err
 }
@@ -404,7 +404,7 @@ func (core *Core) GetScoreList(count int) []string {
 
 	// redisCli := core.RedisLocalCli
 	myFocusList := core.Cfg.Config.Get("focusList").MustArray()
-	fmt.Println("curList: ", myFocusList)
+	logrus.Debug("curList: ", myFocusList)
 	lst := []string{}
 	for _, v := range myFocusList {
 		lst = append(lst, v.(string))
@@ -535,7 +535,7 @@ func (cr *Core) ProcessOrder(od *private.Order) error {
 
 		// TODO FIXME cli2
 		res, _ := cr.RedisLocalCli.Publish(cn, string(bj)).Result()
-		fmt.Println("order publish res: ", res, " content: ", string(bj))
+		logrus.Info("order publish res: ", res, " content: ", string(bj))
 		rsch := ORDER_RESP_PUBLISH + suffix
 		bj1, _ := json.Marshal(res)
 
@@ -585,9 +585,9 @@ func (cr *Core) AddToGeneralCandleChnl(candle *Candle, channels []string) {
 	redisCli := cr.RedisLocalCli
 	ab, err := json.Marshal(candle)
 	if err != nil {
-		fmt.Println("candle marshal err: ", err)
+		logrus.Error("candle marshal err: ", err)
 	}
-	fmt.Println("ab: ", string(ab))
+	logrus.Debug("ab: ", string(ab))
 	for _, v := range channels {
 		suffix := ""
 		env := os.Getenv("GO_ENV")
@@ -597,7 +597,7 @@ func (cr *Core) AddToGeneralCandleChnl(candle *Candle, channels []string) {
 		vd := v + suffix
 		_, err := redisCli.Publish(vd, string(ab)).Result()
 		if err != nil {
-			fmt.Println("err of ma7|ma30 add to redis2:", err, candle.From)
+			logrus.Error("err of ma7|ma30 add to redis2:", err, candle.From)
 		}
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	simple "github.com/bitly/go-simplejson"
+	logrus "github.com/sirupsen/logrus"
 )
 
 type MyConfig struct {
@@ -58,12 +59,12 @@ func (cfg MyConfig) Init() (MyConfig, error) {
 	if err != nil {
 		jsonStr, err = ioutil.ReadFile("configs/basicConfig.json")
 		if err != nil {
-			fmt.Println("err2:", err.Error())
+			logrus.Error("err2:", err.Error())
 			return cfg, err
 		}
 		cfg.Config, err = simple.NewJson([]byte(jsonStr))
 		if err != nil {
-			fmt.Println("err2:", err.Error())
+			logrus.Error("err2:", err.Error())
 			return cfg, err
 		}
 		cfg.Env = env
@@ -96,7 +97,7 @@ func (cfg MyConfig) Init() (MyConfig, error) {
 
 func (cfg *MyConfig) GetConfigJson(arr []string) *simple.Json {
 	env := os.Getenv("GO_ENV")
-	fmt.Println("env: ", env)
+	logrus.Info("env: ", env)
 	cfg.Env = env
 
 	json, err := ioutil.ReadFile("/go/json/basicConfig.json")
@@ -108,11 +109,11 @@ func (cfg *MyConfig) GetConfigJson(arr []string) *simple.Json {
 		}
 	}
 	if err != nil {
-		fmt.Println("read file err: ", err)
+		logrus.Error("read file err: ", err)
 	}
 	rjson, err := simple.NewJson(json)
 	if err != nil {
-		fmt.Println("newJson err: ", err)
+		logrus.Error("newJson err: ", err)
 	}
 	for _, s := range arr {
 		rjson = rjson.Get(s)

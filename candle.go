@@ -212,10 +212,10 @@ func (candle *Candle) PushToWriteLogChan(cr *Core) error {
 	did := candle.InstID + candle.Period + candle.Data[0].(string)
 	candle.Id = HashString(did)
 	ncd, _ := candle.ToStruct(cr)
-	fmt.Println("ncd: ", ncd)
+	logrus.Debug("ncd: ", ncd)
 	cd, err := json.Marshal(ncd)
 	if err != nil {
-		fmt.Println("PushToWriteLog json marshal candle err: ", err)
+		logrus.Error("PushToWriteLog json marshal candle err: ", err)
 	}
 	candle = ncd
 	wg := WriteLog{
@@ -257,38 +257,38 @@ func (cl *Candle) ToStruct(core *Core) (*Candle, error) {
 	// 将字符串转换为 int64 类型的时间戳
 	ts, err := strconv.ParseInt(cl.Data[0].(string), 10, 64)
 	if err != nil {
-		fmt.Println("Error parsing timestamp:", err)
+		logrus.Error("Error parsing timestamp:", err)
 		return nil, err
 	}
 	ncd.Timestamp = time.Unix(ts/1000, (ts%1000)*1000000) // 纳秒级别
 	op, err := strconv.ParseFloat(cl.Data[1].(string), 64)
 	if err != nil {
-		fmt.Println("Error parsing string to float64:", err)
+		logrus.Error("Error parsing string to float64:", err)
 		return nil, err
 	}
 	ncd.Open = op
 	hi, err := strconv.ParseFloat(cl.Data[2].(string), 64)
 	if err != nil {
-		fmt.Println("Error parsing string to float64:", err)
+		logrus.Error("Error parsing string to float64:", err)
 		return nil, err
 	}
 	ncd.High = hi
 	lo, err := strconv.ParseFloat(cl.Data[3].(string), 64)
 	if err != nil {
-		fmt.Println("Error parsing string to float64:", err)
+		logrus.Error("Error parsing string to float64:", err)
 		return nil, err
 	}
 	ncd.Low = lo
 	clse, err := strconv.ParseFloat(cl.Data[4].(string), 64)
 
 	if err != nil {
-		fmt.Println("Error parsing string to float64:", err)
+		logrus.Error("Error parsing string to float64:", err)
 		return nil, err
 	}
 	ncd.Close = clse
 	ncd.VolCcy, err = strconv.ParseFloat(cl.Data[6].(string), 64)
 	if err != nil {
-		fmt.Println("Error parsing string to float64:", err)
+		logrus.Error("Error parsing string to float64:", err)
 		return nil, err
 	}
 	if cl.Data[6].(string) == "1" {
@@ -307,7 +307,7 @@ func (core *Core) SaveUniKey(period string, keyName string, extt time.Duration, 
 	core.RedisLocalCli.Expire(refName, extt)
 	// 为保证唯一性机制，防止SaveToSortSet 被重复执行
 	if len(refRes) != 0 {
-		fmt.Println("refName exist: ", refName)
+		logrus.Error("refName exist: ", refName)
 		return
 	}
 
@@ -324,9 +324,9 @@ func (core *Core) SaveToSortSet(period string, keyName string, extt time.Duratio
 	}
 	rs, err := core.RedisLocalCli.ZAdd(setName, z).Result()
 	if err != nil {
-		fmt.Println("err of ma7|ma30 add to redis:", err)
+		logrus.Error("err of ma7|ma30 add to redis:", err)
 	} else {
-		fmt.Println("sortedSet added to redis:", rs, keyName)
+		logrus.Info("sortedSet added to redis:", rs, keyName)
 	}
 }
 
@@ -441,11 +441,11 @@ func (core *Core) GetRangeKeyList(pattern string, from time.Time) ([]*simple.Jso
 		nv := pattern + strconv.FormatInt(v, 10)
 		str, err := redisCli.Get(nv).Result()
 		if err != nil {
-			fmt.Println("err of redis get key:", nv, err)
+			logrus.Error("err of redis get key:", nv, err)
 		}
 		cur, err := simple.NewJson([]byte(str))
 		if err != nil {
-			fmt.Println("err of create newJson:", str, err)
+			logrus.Error("err of create newJson:", str, err)
 		}
 		res = append(res, cur)
 	}
@@ -465,12 +465,12 @@ func (cl *Candle) SetToKey(core *Core) ([]interface{}, error) {
 	cl.Timestamp = tm
 	dt, err := json.Marshal(cl)
 	if err != nil {
-		fmt.Println("candle Save to String err:", err)
+		logrus.Error("candle Save to String err:", err)
 	}
-	fmt.Println("candle Save to String: ", string(dt))
+	logrus.Info("candle Save to String: ", string(dt))
 	exp, err := core.PeriodToMinutes(cl.Period)
 	if err != nil {
-		fmt.Println("err of PeriodToMinutes:", err)
+		logrus.Error("err of PeriodToMinutes:", err)
 	}
 	// expf := float64(exp) * 60
 	expf := utils.Sqrt(float64(exp)) * 100
@@ -478,19 +478,20 @@ func (cl *Candle) SetToKey(core *Core) ([]interface{}, error) {
 	curVolstr, _ := data[5].(string)
 	curVol, err := strconv.ParseFloat(curVolstr, 64)
 	if err != nil {
-		fmt.Println("err of convert ts:", err)
+		logrus.Error("err of convert ts:", err)
 	}
 	curVolCcystr, _ := data[6].(string)
 	curVolCcy, err := strconv.ParseFloat(curVolCcystr, 64)
 	curPrice := curVolCcy / curVol
 	if curPrice <= 0 {
-		fmt.Println("price有问题", curPrice, "dt: ", string(dt), "from:", cl.From)
+		logrus.Error("price有问题", curPrice, "dt: ", string(dt), "from:", cl.From)
 		err = errors.New("price有问题")
 		return cl.Data, err
 	}
 	redisCli := core.RedisLocalCli
 	// tm := time.UnixMilli(tsi).Format("2006-01-02 15:04")
-	fmt.Println("setToKey:", keyName, "ts: ", "price: ", curPrice, "from:", cl.From)
+	fmt.Println()
+	logrus.Info("setToKey:", keyName, "ts: ", "price: ", curPrice, "from:", cl.From)
 	redisCli.Set(keyName, dt, extt).Result()
 	core.SaveUniKey(cl.Period, keyName, extt, tsi)
 	return cl.Data, err

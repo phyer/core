@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	logrus "github.com/sirupsen/logrus"
 	"math"
 	"math/rand"
 	"runtime"
@@ -103,7 +104,7 @@ func JsonToMap(str string) (map[string]interface{}, error) {
 	err := json.Unmarshal([]byte(str), &tempMap)
 
 	if err != nil {
-		fmt.Println("Unmarshal err: ", err, str)
+		logrus.Error("Unmarshal err: ", err, str)
 	}
 
 	return tempMap, err
