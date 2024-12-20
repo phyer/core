@@ -24,7 +24,7 @@ type Rsi struct {
 	InstID     string    `json:"instID"`
 	Period     string    `json:"period"`
 	Timestamp  time.Time `json:"timeStamp"`
-	Ts         float64   `json:"ts"`
+	Ts         int64     `json:"ts"`
 	LastUpdate time.Time `json:"lastUpdate"`
 	RsiVol     float64   `json:"rsiVol"`
 	Confirm    bool      `json:"confirm"`
