@@ -18,6 +18,7 @@ type MaXList struct {
 }
 
 type MaX struct {
+	Id         string        `json:"_id"`
 	InstID     string        `json:"instID"`
 	Period     string        `json:"period"`
 	Timestamp  time.Time     `json:"timestamp"`
@@ -96,21 +97,12 @@ func (mx *MaX) PushToWriteLogChan(cr *Core) error {
 	s := strconv.FormatFloat(float64(mx.Ts), 'f', 0, 64)
 	did := mx.InstID + "|" + mx.Period + "|" + s
 	logrus.Debug("did of max:", did)
-	mx0 := MaX{}
-	mx0.InstID = mx.InstID
-	mx0.Period = mx.Period
-	mx0.KeyName = mx.KeyName
-	mx0.Count = mx.Count
-	mx0.Ts = mx.Ts
-	mx0.AvgVal = mx.AvgVal
-	mx0.LastUpdate = mx.LastUpdate
-	mx0.Timestamp = mx.Timestamp
 	hs := HashString(did)
-	md, _ := json.Marshal(mx0)
-	mx = &mx0
+	mx.Id = hs
+	md, _ := json.Marshal(mx)
 	wg := WriteLog{
 		Content: md,
-		Tag:     "sardine.log.maX." + mx0.Period,
+		Tag:     "sardine.log.maX." + mx.Period,
 		Id:      hs,
 	}
 	cr.WriteLogChan <- &wg
