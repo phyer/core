@@ -21,7 +21,7 @@ type MaX struct {
 	Id         string        `json:"_id"`
 	InstID     string        `json:"instID"`
 	Period     string        `json:"period"`
-	Timestamp  time.Time     `json:"timestamp"`
+	Timestamp  time.Time     `json:"Timestamp"`
 	LastUpdate time.Time     `json:"lastUpdate"`
 	KeyName    string        `json:"keyName"`
 	Data       []interface{} `json:"data"`
