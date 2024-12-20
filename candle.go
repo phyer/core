@@ -21,14 +21,14 @@ import (
 type Candle struct {
 	Id         string `json:"_id"`
 	core       *Core
-	InstID     string `json:"instId"`
+	InstID     string `json:"instID"`
 	Period     string `json:"period"`
 	Data       []interface{}
 	From       string    `json:"from"`
-	Timestamp  time.Time `json:""`
+	Timestamp  time.Time `json:"timeStamp"`
 	LastUpdate time.Time `json:"lastUpdate"`
 	Open       float64   `json:"open"`
-	High       float64   `json:"higth"`
+	High       float64   `json:"high"`
 	Low        float64   `json:"low"`
 	Close      float64   `json:"close"`
 	VolCcy     float64   `json:"volCcy"`
