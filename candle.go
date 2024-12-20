@@ -21,18 +21,18 @@ import (
 type Candle struct {
 	Id         string `json:"_id"`
 	core       *Core
-	InstID     string
-	Period     string
+	InstID     string `json:"instId"`
+	Period     string `json:"period"`
 	Data       []interface{}
-	From       string
-	Timestamp  time.Time
+	From       string    `json:"from"`
+	Timestamp  time.Time `json:""`
 	LastUpdate time.Time `json:"lastUpdate"`
-	Open       float64
-	High       float64
-	Low        float64
-	Close      float64
-	VolCcy     float64
-	Confirm    bool
+	Open       float64   `json:"open"`
+	High       float64   `json:"higth"`
+	Low        float64   `json:"low"`
+	Close      float64   `json:"close"`
+	VolCcy     float64   `json:"volCcy"`
+	Confirm    bool      `json:"confirm"`
 }
 type Sample interface {
 	SetToKey(cr *Core) ([]interface{}, error)
