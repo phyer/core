@@ -36,6 +36,25 @@ type RsiList struct {
 	UpdateNickName string `json:"updateNickName"`
 	List           []*Rsi `json:"list"`
 }
+type StockRsi struct {
+	Id         string `json:"_id"`
+	core       *Core
+	InstID     string    `json:"instID"`
+	Period     string    `json:"period"`
+	Timestamp  time.Time `json:"timeStamp"`
+	Ts         int64     `json:"ts"`
+	Count      int       `json:"count"`
+	LastUpdate time.Time `json:"lastUpdate"`
+	KVol       float64   `json:"kVol"`
+	DVol       float64   `json:"dVol"`
+	Confirm    bool      `json:"confirm"`
+}
+type StockRsiList struct {
+	Count          int         `json:"count,number"`
+	LastUpdateTime int64       `json:"lastUpdateTime"`
+	UpdateNickName string      `json:"updateNickName"`
+	List           []*StockRsi `json:"list"`
+}
 
 func (rsi *Rsi) PushToWriteLogChan(cr *Core) error {
 	did := rsi.InstID + rsi.Period + ToString(rsi.Ts)
@@ -48,6 +67,21 @@ func (rsi *Rsi) PushToWriteLogChan(cr *Core) error {
 		Content: cd,
 		Tag:     "sardine.log.rsi." + rsi.Period,
 		Id:      rsi.Id,
+	}
+	cr.WriteLogChan <- &wg
+	return nil
+}
+func (srsi *StockRsi) PushToWriteLogChan(cr *Core) error {
+	did := srsi.InstID + srsi.Period + ToString(srsi.Ts)
+	srsi.Id = HashString(did)
+	cd, err := json.Marshal(srsi)
+	if err != nil {
+		logrus.Error("PushToWriteLog json marshal rsi err: ", err)
+	}
+	wg := WriteLog{
+		Content: cd,
+		Tag:     "sardine.log.stockRsi." + srsi.Period,
+		Id:      srsi.Id,
 	}
 	cr.WriteLogChan <- &wg
 	return nil
