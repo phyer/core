@@ -37,6 +37,7 @@ type Core struct {
 	CandlesProcessChan   chan *Candle
 	MaXProcessChan       chan *MaX
 	RsiProcessChan       chan *Rsi
+	StockRsiProcessChan  chan *StockRsi
 	TickerInforocessChan chan *TickerInfo
 	CoasterChan          chan *CoasterInfo
 	//	SeriesChan           chan *SeriesInfo
