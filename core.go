@@ -108,7 +108,7 @@ func WriteLogProcess(cr *Core) {
 			logrus.Info("start writelog: " + wg.Tag + " " + wg.Id)
 			wg.Process(cr)
 		}(wg)
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(5 * time.Millisecond)
 	}
 }
 
