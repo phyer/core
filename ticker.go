@@ -5,15 +5,17 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"time"
 )
 
 type TickerInfo struct {
-	Id        string  `json:"_id"`
-	InstID    string  `json:"instID"`
-	Last      float64 `json:"last"`
-	InstType  string  `json:"instType"`
-	VolCcy24h float64 `json:"volCcy24h"`
-	Ts        int64   `json:"ts"`
+	Id         string    `json:"_id"`
+	InstID     string    `json:"instID"`
+	Last       float64   `json:"last"`
+	LastUpdate time.Time `json:"lastUpdate"`
+	InstType   string    `json:"instType"`
+	VolCcy24h  float64   `json:"volCcy24h"`
+	Ts         int64     `json:"ts"`
 }
 
 type TickerInfoResp struct {
@@ -26,12 +28,13 @@ type TickerInfoResp struct {
 
 func (tir *TickerInfoResp) Convert() TickerInfo {
 	ti := TickerInfo{
-		Id:        HashString(tir.InstID + tir.Ts),
-		InstID:    tir.InstID,
-		InstType:  tir.InstType,
-		Last:      ToFloat64(tir.Last),
-		VolCcy24h: ToFloat64(tir.VolCcy24h),
-		Ts:        ToInt64(tir.Ts),
+		Id:         HashString(tir.InstID + tir.Ts),
+		InstID:     tir.InstID,
+		InstType:   tir.InstType,
+		Last:       ToFloat64(tir.Last),
+		VolCcy24h:  ToFloat64(tir.VolCcy24h),
+		Ts:         ToInt64(tir.Ts),
+		LastUpdate: time.Now(),
 	}
 	return ti
 }
