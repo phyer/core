@@ -9,7 +9,7 @@ import (
 
 type TickerInfo struct {
 	Id        string  `json:"_id"`
-	InstID    string  `json:"instId"`
+	InstID    string  `json:"instID"`
 	Last      float64 `json:"last"`
 	InstType  string  `json:"instType"`
 	VolCcy24h float64 `json:"volCcy24h"`
@@ -17,7 +17,7 @@ type TickerInfo struct {
 }
 
 type TickerInfoResp struct {
-	InstID    string `json:"instId"`
+	InstID    string `json:"instID"`
 	Last      string `json:"last"`
 	InstType  string `json:"instType"`
 	VolCcy24h string `json:"volCcy24h"`
