@@ -73,7 +73,7 @@ func ToFloat64(val interface{}) float64 {
 // TODO 有待实现
 func (ti *TickerInfo) SetToKey(cr *Core) error {
 	js, _ := json.Marshal(*ti)
-	plateName := ti.InstId + "|tickerInfo"
+	plateName := ti.InstID + "|tickerInfo"
 	_, err := cr.RedisLocalCli.Set(plateName, string(js), 0).Result()
 	return err
 }
