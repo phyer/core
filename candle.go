@@ -180,6 +180,10 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 	leng := len(rsp.Data)
 	for _, v := range rsp.Data {
 		tmi := ToInt64(v[0])
+		last := ToInt64(v[4])
+		if last == 0 {
+			continue
+		}
 		ts, _ := Int64ToTime(tmi)
 		candle := Candle{
 			InstID:     instId,
