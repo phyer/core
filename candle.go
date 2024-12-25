@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
+	// "fmt"
 	"math/rand"
 	"os"
 	"strconv"
@@ -178,7 +178,7 @@ func IsModOf(curInt int64, duration time.Duration) bool {
 
 func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura time.Duration, withWs bool) {
 	leng := len(rsp.Data)
-	fmt.Println("saveCandle leng: ", leng, " instId: ", instId, " period: ", period)
+	// fmt.Println("saveCandle leng: ", leng, " instId: ", instId, " period: ", period)
 	for _, v := range rsp.Data {
 		tmi := ToInt64(v[0])
 		last := ToInt64(v[4])
@@ -495,7 +495,6 @@ func (cl *Candle) SetToKey(core *Core) ([]interface{}, error) {
 	}
 	redisCli := core.RedisLocalCli
 	// tm := time.UnixMilli(tsi).Format("2006-01-02 15:04")
-	fmt.Println()
 	logrus.Info("setToKey:", keyName, "ts: ", "price: ", curPrice, "from:", cl.From)
 	redisCli.Set(keyName, dt, extt).Result()
 	core.SaveUniKey(cl.Period, keyName, extt, tsi)
