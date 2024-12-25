@@ -89,7 +89,16 @@ func (rst *RestQueue) Save(cr *Core) {
 	if len(rst.Limit) > 0 {
 		limitSec = fmt.Sprint("&limit=", rst.Limit)
 	}
-	link := "/api/v5/market/candles?instId=" + rst.InstId + "&bar=" + rst.Bar + limitSec + afterSec + beforeSec
+	isHistory := false
+	ct, _ := cr.PeriodToMinutes(rst.Bar)
+	if rst.After/ct > 30 {
+		isHistory = true
+	}
+	prfix := ""
+	if isHistory {
+		prfix = "history-"
+	}
+	link := "/api/v5/market/" + prfix + "candles?instId=" + rst.InstId + "&bar=" + rst.Bar + limitSec + afterSec + beforeSec
 
 	logrus.Info("restLink: ", link)
 	rsp, err := cr.v5PublicInvoke(link)
