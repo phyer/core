@@ -598,7 +598,7 @@ func (cr *Core) AddToGeneralCandleChnl(candle *Candle, channels []string) {
 	if err != nil {
 		logrus.Error("candle marshal err: ", err)
 	}
-	logrus.Debug("ab: ", string(ab))
+	logrus.Debug("AddToGeneralCandleChnl: ", string(ab), " channels: ", channels)
 	for _, v := range channels {
 		suffix := ""
 		env := os.Getenv("GO_ENV")
