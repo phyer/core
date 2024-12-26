@@ -184,7 +184,7 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 		tmi := ToInt64(v[0])
 		last := ToInt64(v[4])
 		if last == 0 {
-			logrus.Info("saveCandles last is 0: ", leng, " instId: ", instId, " period: ", period, " length of rsp.Data: ", len(rsp.Data), " data:", rsp.Data)
+			logrus.Info("saveCandles last is 0: ", "v[4]: ", v[4], " leng: ", leng, " instId: ", instId, " period: ", period, " length of rsp.Data: ", len(rsp.Data), " data:", rsp.Data)
 			continue
 		}
 		ts, _ := Int64ToTime(tmi)
