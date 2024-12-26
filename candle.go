@@ -180,7 +180,7 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 	leng := len(rsp.Data)
 	// fmt.Println("saveCandle leng: ", leng, " instId: ", instId, " period: ", period)
 	logrus.Info("saveCandle leng: ", leng, " instId: ", instId, " period: ", period, " length of rsp.Data: ", len(rsp.Data))
-	for _, v := range rsp.Data {
+	for k, v := range rsp.Data {
 		tmi := ToInt64(v[0])
 		last := ToInt64(v[4])
 		if last == 0 {
@@ -207,9 +207,11 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 		// 如果candle都不需要存到redis，那么AddToGeneralCandleChnl也没有意义
 		saveCandle := os.Getenv("TEXUS_SAVECANDLE")
 		if saveCandle == "true" {
-			candle.SetToKey(core)
-			core.AddToGeneralCandleChnl(&candle, arys)
-			time.Sleep(dura / time.Duration(leng))
+			go func(k int) {
+				candle.SetToKey(core)
+				core.AddToGeneralCandleChnl(&candle, arys)
+				time.Sleep(time.Duration(k*40) * time.Millisecond)
+			}(k)
 		}
 	}
 }
