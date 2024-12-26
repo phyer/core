@@ -91,7 +91,7 @@ func (rst *RestQueue) Save(cr *Core) {
 	}
 	isHistory := false
 	ct, _ := cr.PeriodToMinutes(rst.Bar)
-	if rst.After/ct > 30 {
+	if rst.After/ct > 10 {
 		isHistory = true
 	}
 	prfix := ""

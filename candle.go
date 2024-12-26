@@ -203,6 +203,7 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 		arys := []string{ALLCANDLES_PUBLISH}
 		if withWs {
 			arys = append(arys, ALLCANDLES_INNER_PUBLISH)
+			time.Sleep(time.Duration(k*40) * time.Millisecond)
 		}
 		// 如果candle都不需要存到redis，那么AddToGeneralCandleChnl也没有意义
 		saveCandle := os.Getenv("TEXUS_SAVECANDLE")
