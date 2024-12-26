@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"reflect"
 	// "fmt"
 	"math/rand"
 	"os"
@@ -183,8 +184,9 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 	for k, v := range rsp.Data {
 		tmi := ToInt64(v[0])
 		last := ToInt64(v[4])
+		ty := reflect.TypeOf(v[4]).Name()
 		if last == 0 {
-			logrus.Info("saveCandles last is 0: ", "v[4]: ", v[4], " leng: ", leng, " instId: ", instId, " period: ", period, " length of rsp.Data: ", len(rsp.Data), " data:", rsp.Data)
+			logrus.Info("saveCandles last is 0: ", "v[4]: ", v[4], "v[4] type: ", ty, "leng: ", leng, " instId: ", instId, " period: ", period, " length of rsp.Data: ", len(rsp.Data), " data:", rsp.Data)
 			continue
 		}
 		ts, _ := Int64ToTime(tmi)
