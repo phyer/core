@@ -217,7 +217,7 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 		logrus.Info("saveCandles datas: k,v: ", k, v)
 		if saveCandle == "true" {
 			go func(k int) {
-				time.Sleep(time.Duration(k*40) * time.Millisecond)
+				time.Sleep(time.Duration(k*100) * time.Millisecond)
 				candle.SetToKey(core)
 				core.AddToGeneralCandleChnl(&candle, arys)
 			}(k)
