@@ -208,9 +208,9 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 		saveCandle := os.Getenv("TEXUS_SAVECANDLE")
 		if saveCandle == "true" {
 			go func(k int) {
+				time.Sleep(time.Duration(k*40) * time.Millisecond)
 				candle.SetToKey(core)
 				core.AddToGeneralCandleChnl(&candle, arys)
-				time.Sleep(time.Duration(k*40) * time.Millisecond)
 			}(k)
 		}
 	}
