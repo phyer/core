@@ -179,7 +179,7 @@ func IsModOf(curInt int64, duration time.Duration) bool {
 func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura time.Duration, withWs bool) {
 	leng := len(rsp.Data)
 	// fmt.Println("saveCandle leng: ", leng, " instId: ", instId, " period: ", period)
-	logrus.Info("saveCandle leng: ", leng, " instId: ", instId, " period: ", period, " length of rsp.Data: ", len(rsp.Data))
+	logrus.Info("saveCandles leng: ", leng, " instId: ", instId, " period: ", period, " length of rsp.Data: ", len(rsp.Data))
 	for k, v := range rsp.Data {
 		tmi := ToInt64(v[0])
 		last := ToInt64(v[4])
@@ -206,6 +206,7 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 		}
 		// 如果candle都不需要存到redis，那么AddToGeneralCandleChnl也没有意义
 		saveCandle := os.Getenv("TEXUS_SAVECANDLE")
+		logrus.Info("saveCandles datas: k,v: ", k, v)
 		if saveCandle == "true" {
 			go func(k int) {
 				time.Sleep(time.Duration(k*40) * time.Millisecond)
