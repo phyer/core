@@ -179,6 +179,7 @@ func IsModOf(curInt int64, duration time.Duration) bool {
 func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura time.Duration, withWs bool) {
 	leng := len(rsp.Data)
 	// fmt.Println("saveCandle leng: ", leng, " instId: ", instId, " period: ", period)
+	logrus.Info("saveCandle leng: ", leng, " instId: ", instId, " period: ", period, " length of rsp.Data: ", len(rsp.Data))
 	for _, v := range rsp.Data {
 		tmi := ToInt64(v[0])
 		last := ToInt64(v[4])
