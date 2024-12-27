@@ -270,6 +270,7 @@ func (cl *Candle) ToStruct(core *Core) (*Candle, error) {
 	ncd.InstID = cl.InstID
 	ncd.From = cl.From
 	ncd.LastUpdate = cl.LastUpdate
+	ncd.Data = cl.Data
 
 	// 将字符串转换为 int64 类型的时间戳
 	ts, err := strconv.ParseInt(cl.Data[0].(string), 10, 64)
@@ -473,6 +474,7 @@ func (core *Core) GetRangeKeyList(pattern string, from time.Time) ([]*simple.Jso
 func (cl *Candle) SetToKey(core *Core) ([]interface{}, error) {
 	data := cl.Data
 	tsi, err := strconv.ParseInt(data[0].(string), 10, 64)
+
 	tss := strconv.FormatInt(tsi, 10)
 	tm, _ := Int64ToTime(tsi)
 
