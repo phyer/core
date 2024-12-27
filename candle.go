@@ -228,13 +228,13 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 func (candle *Candle) PushToWriteLogChan(cr *Core) error {
 	did := candle.InstID + candle.Period + candle.Data[0].(string)
 	candle.Id = HashString(did)
-	ncd, _ := candle.ToStruct(cr)
-	logrus.Debug("ncd: ", ncd)
-	cd, err := json.Marshal(ncd)
+	cl, _ := candle.ToStruct(cr)
+	logrus.Debug("cl: ", cl)
+	cd, err := json.Marshal(cl)
 	if err != nil {
 		logrus.Error("PushToWriteLog json marshal candle err: ", err)
 	}
-	candle = ncd
+	candle = cl
 	wg := WriteLog{
 		Content: cd,
 		Tag:     "sardine.log.candle." + candle.Period,
@@ -264,57 +264,49 @@ func HashString(input string) string {
 
 func (cl *Candle) ToStruct(core *Core) (*Candle, error) {
 	// cl.Timestamp
-	ncd := Candle{}
-	ncd.Id = cl.Id
-	ncd.Period = cl.Period
-	ncd.InstID = cl.InstID
-	ncd.From = cl.From
-	ncd.LastUpdate = cl.LastUpdate
-	ncd.Data = cl.Data
-
 	// 将字符串转换为 int64 类型的时间戳
 	ts, err := strconv.ParseInt(cl.Data[0].(string), 10, 64)
 	if err != nil {
 		logrus.Error("Error parsing timestamp:", err)
 		return nil, err
 	}
-	ncd.Timestamp = time.Unix(ts/1000, (ts%1000)*1000000) // 纳秒级别
+	cl.Timestamp = time.Unix(ts/1000, (ts%1000)*1000000) // 纳秒级别
 	op, err := strconv.ParseFloat(cl.Data[1].(string), 64)
 	if err != nil {
 		logrus.Error("Error parsing string to float64:", err)
 		return nil, err
 	}
-	ncd.Open = op
+	cl.Open = op
 	hi, err := strconv.ParseFloat(cl.Data[2].(string), 64)
 	if err != nil {
 		logrus.Error("Error parsing string to float64:", err)
 		return nil, err
 	}
-	ncd.High = hi
+	cl.High = hi
 	lo, err := strconv.ParseFloat(cl.Data[3].(string), 64)
 	if err != nil {
 		logrus.Error("Error parsing string to float64:", err)
 		return nil, err
 	}
-	ncd.Low = lo
+	cl.Low = lo
 	clse, err := strconv.ParseFloat(cl.Data[4].(string), 64)
 
 	if err != nil {
 		logrus.Error("Error parsing string to float64:", err)
 		return nil, err
 	}
-	ncd.Close = clse
-	ncd.VolCcy, err = strconv.ParseFloat(cl.Data[6].(string), 64)
+	cl.Close = clse
+	cl.VolCcy, err = strconv.ParseFloat(cl.Data[6].(string), 64)
 	if err != nil {
 		logrus.Error("Error parsing string to float64:", err)
 		return nil, err
 	}
 	if cl.Data[6].(string) == "1" {
-		ncd.Confirm = true
+		cl.Confirm = true
 	} else {
-		ncd.Confirm = false
+		cl.Confirm = false
 	}
-	return &ncd, nil
+	return cl, nil
 }
 
 // 保证同一个 period, keyName ，在一个周期里，SaveToSortSet只会被执行一次
