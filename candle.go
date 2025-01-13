@@ -312,9 +312,9 @@ func (cl *Candle) ToStruct(core *Core) (*Candle, error) {
 // 保证同一个 period, keyName ，在一个周期里，SaveToSortSet只会被执行一次
 func (core *Core) SaveUniKey(period string, keyName string, extt time.Duration, tsi int64) {
 
-	refName := keyName + "|refer"
+	// refName := keyName + "|refer"
 	// refRes, _ := core.RedisLocalCli.GetSet(refName, 1).Result()
-	core.RedisLocalCli.Expire(refName, extt)
+	// core.RedisLocalCli.Expire(refName, extt)
 	// 为保证唯一性机制，防止SaveToSortSet 被重复执行
 	// 关掉唯一性验证，试试
 	// if len(refRes) != 0 {
@@ -335,9 +335,9 @@ func (core *Core) SaveToSortSet(period string, keyName string, extt time.Duratio
 	}
 	rs, err := core.RedisLocalCli.ZAdd(setName, z).Result()
 	if err != nil {
-		logrus.Error("err of ma7|ma30 add to redis:", err)
+		logrus.Warn("err of ma7|ma30 add to redis:", err)
 	} else {
-		logrus.Info("sortedSet added to redis:", rs, keyName)
+		logrus.Warn("sortedSet added to redis:", rs, keyName)
 	}
 }
 
@@ -485,7 +485,7 @@ func (cl *Candle) SetToKey(core *Core) ([]interface{}, error) {
 		logrus.Error("err of PeriodToMinutes:", err)
 	}
 	// expf := float64(exp) * 60
-	expf := utils.Sqrt(float64(exp)) * 100
+	expf := float64(exp) * 300
 	extt := time.Duration(expf) * time.Minute
 	curVolstr, _ := data[5].(string)
 	curVol, err := strconv.ParseFloat(curVolstr, 64)
