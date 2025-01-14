@@ -619,7 +619,7 @@ func (cr *Core) AddToGeneralCandleChnl(candle *Candle, channels []string) {
 // from: 倒推的起始时间点
 // ctype: candle或者maX
 func (core *Core) GetRangeMaXSortedSet(setName string, count int, from time.Time) (*MaXList, error) {
-	mxl := MaXList{}
+	mxl := &MaXList{Count: count}
 	ary1 := strings.Split(setName, "|")
 	ary2 := []string{}
 	period := ""
@@ -628,7 +628,7 @@ func (core *Core) GetRangeMaXSortedSet(setName string, count int, from time.Time
 
 	dui, err := core.PeriodToMinutes(period)
 	if err != nil {
-		return &mxl, err
+		return mxl, err
 	}
 	fromt := from.UnixMilli()
 	froms := strconv.FormatInt(fromt, 10)
@@ -640,10 +640,10 @@ func (core *Core) GetRangeMaXSortedSet(setName string, count int, from time.Time
 		Count: int64(count),
 	}
 	ary := []string{}
-	logrus.Debug("ZRevRangeByScore ", setName, froms, sts)
+	logrus.Debug("ZRevRangeByScore ", " setName:", setName, " froms:", froms, " sts:", sts)
 	dura, err := core.GetExpiration(period)
 	if err != nil {
-		return &mxl, err
+		return mxl, err
 	}
 	// fmt.Println("GetExpiration dura: ", dura, " period: ", period)
 	ot := time.Now().Add(dura * -1)
@@ -653,17 +653,17 @@ func (core *Core) GetRangeMaXSortedSet(setName string, count int, from time.Time
 	cli.LTrim(setName, 0, oti)
 	cunt, _ := cli.ZRemRangeByScore(setName, "0", strconv.FormatInt(oti, 10)).Result()
 	if cunt > 0 {
-		logrus.Warning("移出过期的引用数量：", "setName:", setName, " count:", count)
+		logrus.Warning("移出过期的引用数量：", "setName:", setName, " cunt:", cunt)
 	}
 	ary, err = cli.ZRevRangeByScore(setName, opt).Result()
 	if err != nil {
 		logrus.Warning("GetRangeMaXSortedSet ZRevRangeByScore err: ", " setName: ", setName, ", opt:", opt, ", res:", ary, ", err:", err)
-		return &mxl, err
+		return mxl, err
 	}
 	keyAry, err := cli.MGet(ary...).Result()
 	if err != nil {
 		logrus.Warning("GetRangeMaXSortedSet mget err: ", "setName:", setName, ", max:", opt.Max, ", min:", opt.Min, ", res:", keyAry, ", err:", err)
-		return &mxl, err
+		return mxl, err
 	}
 	for _, str := range keyAry {
 		if str == nil {
@@ -685,7 +685,7 @@ func (core *Core) GetRangeMaXSortedSet(setName string, count int, from time.Time
 		mxl.List = append(mxl.List, &mx)
 	}
 	mxl.Count = count
-	return &mxl, nil
+	return mxl, nil
 }
 
 // 根据周期的文本内容，返回这代表多少个分钟
