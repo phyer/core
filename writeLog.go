@@ -23,7 +23,7 @@ func (wg *WriteLog) Process(cr *Core) error {
 		fullUrl := "http://" + cr.FluentBitUrl + "/" + wg.Tag
 		res, err := http.Post(fullUrl, "application/json", reqBody)
 
-		fmt.Println("requested, response:", fullUrl, string(wg.Content), res)
+		logrus.Warn("requested, response:", fullUrl, string(wg.Content), res)
 		if err != nil {
 			logrus.Error(err)
 		}
