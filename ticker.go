@@ -47,6 +47,8 @@ func ToString(val interface{}) string {
 		valstr = fmt.Sprintf("%f", val)
 	} else if reflect.TypeOf(val).Name() == "int64" {
 		valstr = strconv.FormatInt(val.(int64), 16)
+	} else if reflect.TypeOf(val).Name() == "int" {
+		valstr = fmt.Sprintf("%d", val)
 	}
 	return valstr
 }
