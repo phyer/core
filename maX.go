@@ -95,7 +95,7 @@ func Int64ToTime(ts int64) (time.Time, error) {
 }
 func (mx *MaX) PushToWriteLogChan(cr *Core) error {
 	s := strconv.FormatFloat(float64(mx.Ts), 'f', 0, 64)
-	did := "maX" + ToString(mx.Count) + mx.InstID + "|" + mx.Period + "|" + s
+	did := "maX" + ToString(mx.Count) + "|" + mx.InstID + "|" + mx.Period + "|" + s
 	logrus.Debug("did of max:", did)
 	hs := HashString(did)
 	mx.Id = hs
