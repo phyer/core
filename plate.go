@@ -44,24 +44,24 @@ func (pl *Plate) SetToKey(cr *Core) error {
 	return err
 }
 
-func (pl *Plate) MakeCoaster(cr *Core, period string) (*Coaster, error) {
+func (pl *Plate) MakeCoaster(cr *Core, period string) error {
 	lastTime := time.Now()
 	setName := "candle" + period + "|" + pl.InstID + "|sortedSet"
 	cdl, err := cr.GetRangeCandleSortedSet(setName, pl.Count, lastTime)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	cdl.RecursiveBubbleS(len(cdl.List), "asc")
 	setName7 := "ma7|" + setName
 	setName30 := "ma30|" + setName
 	mxl7, err := cr.GetRangeMaXSortedSet(setName7, pl.Count, lastTime)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	mxl7.RecursiveBubbleS(len(mxl7.List), "asc")
 	mxl30, err := cr.GetRangeMaXSortedSet(setName30, pl.Count, lastTime)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	mxl30.RecursiveBubbleS(len(mxl30.List), "asc")
 	coaster := Coaster{
@@ -74,5 +74,5 @@ func (pl *Plate) MakeCoaster(cr *Core, period string) (*Coaster, error) {
 		Ma30List:   *mxl30,
 	}
 	pl.CoasterMap["period"+period] = coaster
-	return &coaster, err
+	return err
 }
