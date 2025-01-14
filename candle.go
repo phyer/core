@@ -312,16 +312,15 @@ func (cl *Candle) ToStruct(core *Core) (*Candle, error) {
 // 保证同一个 period, keyName ，在一个周期里，SaveToSortSet只会被执行一次
 func (core *Core) SaveUniKey(period string, keyName string, extt time.Duration, tsi int64) {
 
-	// refName := keyName + "|refer"
-	// refRes, _ := core.RedisLocalCli.GetSet(refName, 1).Result()
-	// core.RedisLocalCli.Expire(refName, extt)
+	refName := keyName + "|refer"
+	refRes, _ := core.RedisLocalCli.GetSet(refName, 1).Result()
+	core.RedisLocalCli.Expire(refName, extt)
 	// 为保证唯一性机制，防止SaveToSortSet 被重复执行
 	// 关掉唯一性验证，试试
-	// if len(refRes) != 0 {
-	// 	logrus.Error("refName exist: ", refName)
-	// 	return
-	// }
-
+	if len(refRes) != 0 {
+		logrus.Error("refName exist: ", refName)
+		return
+	}
 	core.SaveToSortSet(period, keyName, extt, tsi)
 }
 
