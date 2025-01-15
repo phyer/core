@@ -316,12 +316,32 @@ func (core *Core) SaveUniKey(period string, keyName string, extt time.Duration, 
 	refRes, _ := core.RedisLocalCli.GetSet(refName, 1).Result()
 	core.RedisLocalCli.Expire(refName, extt)
 	// 为保证唯一性机制，防止SaveToSortSet 被重复执行
-	// 关掉唯一性验证，试试
-	if len(refRes) != 0 {
+	founded, _ := core.findInSortSet(period, keyName, extt, tsi)
+	if len(refRes) != 0 && founded {
 		logrus.Error("refName exist: ", refName)
 		return
 	}
 	core.SaveToSortSet(period, keyName, extt, tsi)
+}
+
+func (core *Core) findInSortSet(period string, keyName string, extt time.Duration, tsi int64) (bool, error) {
+	founded := false
+	ary := strings.Split(keyName, "ts:")
+	setName := ary[0] + "sortedSet"
+	opt := redis.ZRangeBy{
+		Min: ToString(tsi),
+		Max: ToString(tsi),
+	}
+	rs, err := core.RedisLocalCli.ZRangeByScore(setName, opt).Result()
+	if len(rs) > 0 {
+		founded = true
+	}
+	if err != nil {
+		logrus.Error("err of ma7|ma30 add to redis:", err)
+	} else {
+		logrus.Info("sortedSet added to redis:", rs, keyName)
+	}
+	return founded, nil
 }
 
 // tsi: 上报时间timeStamp millinSecond
