@@ -218,7 +218,7 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 		}
 		minutes, _ := core.PeriodToMinutes(period)
 		logrus.Warn("tmi: ", tmi, " curTim:", curTmi, " minutes: ", minutes)
-		if (tmi-curTmi)/(minutes*60000000) != 0 {
+		if (tmi-curTmi)/(minutes*60000) != 0 {
 			logrus.Warn("saveCandles error: 当前记录中的时间戳：", curSegStartTime, "，并非周期节点：", period, " 忽略")
 			continue
 		}
