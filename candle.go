@@ -183,6 +183,7 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 	logrus.Info("saveCandles leng: ", leng, " instId: ", instId, " period: ", period, " length of rsp.Data: ", len(rsp.Data))
 	// softCandleSegmentList
 	segments := core.Cfg.Config.Get("softCandleSegmentList").MustArray()
+	logrus.Warn("lensof segments:", len(segments))
 	curSegStartTime := ""
 	for _, v := range segments {
 		cs := CandleSegment{}
