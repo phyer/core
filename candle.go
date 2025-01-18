@@ -188,11 +188,11 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 	for k, v := range segments {
 		logrus.Warn("fetch segments:", k, v)
 		cs := CandleSegment{}
+		sv, _ := json.Marshal(v)
+		json.Unmarshal(sv, &cs)
 		if !cs.Enabled {
 			continue
 		}
-		sv, _ := json.Marshal(v)
-		json.Unmarshal(sv, &cs)
 		logrus.Warn("fetch segments2: cs.Seg", cs.Seg, ", period:", period)
 
 		if cs.Seg == period {
