@@ -181,6 +181,24 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 	leng := len(rsp.Data)
 	// fmt.Println("saveCandle leng: ", leng, " instId: ", instId, " period: ", period)
 	logrus.Info("saveCandles leng: ", leng, " instId: ", instId, " period: ", period, " length of rsp.Data: ", len(rsp.Data))
+	// softCandleSegmentList
+	segments := core.Cfg.Config.Get("softCandleSegmentList").MustArray()
+	curSegStartTime := ""
+	for _, v := range segments {
+		cs := CandleSegment{}
+		sv, _ := json.Marshal(v)
+		json.Unmarshal(sv, &cs)
+		if !cs.Enabled {
+			continue
+		}
+		if cs.Seg == period {
+			curSegStartTime = cs.StartTime
+		}
+		break
+	}
+	curTm, _ := time.ParseInLocation("2006-01-02 15:04.000", curSegStartTime, time.Local)
+	curTmi := curTm.UnixMilli()
+
 	for k, v := range rsp.Data {
 		tmi := ToInt64(v[0])
 		last := ToFloat64(v[4])
@@ -193,6 +211,12 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 			// logrus.Info("saveCandles last is 0: ", "v[4]: ", v[4], "v[4] type: ", ty, " v4It: ", v4It, "leng: ", leng, " instId: ", instId, " period: ", period, " length of rsp.Data: ", len(rsp.Data), " data:", rsp.Data)
 			continue
 		}
+		minutes, _ := core.PeriodToMinutes(period)
+		if (tmi-curTmi)/(minutes*1000000) != 0 {
+			logrus.Warn("saveCandles error: 当前记录中的时间戳：", curSegStartTime, "，并非周期节点：", period, " 忽略")
+			continue
+		}
+
 		ts, _ := Int64ToTime(tmi)
 		candle := Candle{
 			InstID:     instId,
@@ -315,9 +339,9 @@ func (core *Core) SaveUniKey(period string, keyName string, extt time.Duration, 
 	refName := keyName + "|refer"
 	refRes, _ := core.RedisLocalCli.GetSet(refName, 1).Result()
 	core.RedisLocalCli.Expire(refName, extt)
-	// 为保证唯一性机制，防止SaveToSortSet 被重复执行
-	founded, _ := core.findInSortSet(period, keyName, extt, tsi)
-	if len(refRes) != 0 && founded {
+	// 为保证唯一性机制，防止SaveToSortSet 被重复执行, ps: 不需要唯一，此操作幂等在redis里
+	// founded, _ := core.findInSortSet(period, keyName, extt, tsi)
+	if len(refRes) != 0 {
 		logrus.Error("refName exist: ", refName)
 		return
 	}
