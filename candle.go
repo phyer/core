@@ -193,7 +193,7 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 		}
 		sv, _ := json.Marshal(v)
 		json.Unmarshal(sv, &cs)
-		logrus.Warn("fetch segments2:", cs)
+		logrus.Warn("fetch segments2: cs.Seg", cs.Seg, ", period:", period)
 
 		if cs.Seg == period {
 			curSegStartTime = cs.StartTime
