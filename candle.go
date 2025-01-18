@@ -188,17 +188,19 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 	for k, v := range segments {
 		logrus.Warn("fetch segments:", k, v)
 		cs := CandleSegment{}
-		sv, _ := json.Marshal(v)
-		json.Unmarshal(sv, &cs)
-		logrus.Warn("fetch segments2:", cs)
 		if !cs.Enabled {
 			continue
 		}
+		sv, _ := json.Marshal(v)
+		json.Unmarshal(sv, &cs)
+		logrus.Warn("fetch segments2:", cs)
+
 		if cs.Seg == period {
 			curSegStartTime = cs.StartTime
 		}
 		break
 	}
+	logrus.Warn("curSegStartTime:", curSegStartTime)
 	curTm, _ := time.ParseInLocation("2006-01-02 15:04.000", curSegStartTime, time.Local)
 	curTmi := curTm.UnixMilli()
 
