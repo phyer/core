@@ -185,10 +185,12 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 	segments := core.Cfg.Config.Get("softCandleSegmentList").MustArray()
 	logrus.Warn("lensof segments:", len(segments))
 	curSegStartTime := ""
-	for _, v := range segments {
+	for k, v := range segments {
+		logrus.Warn("fetch segments:", k, v)
 		cs := CandleSegment{}
 		sv, _ := json.Marshal(v)
 		json.Unmarshal(sv, &cs)
+		logrus.Warn("fetch segments2:", cs)
 		if !cs.Enabled {
 			continue
 		}
