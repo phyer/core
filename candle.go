@@ -193,7 +193,7 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 		if !cs.Enabled {
 			continue
 		}
-		logrus.Warn("fetch segments2: cs.Seg", cs.Seg, ", period:", period)
+		logrus.Warn("fetch segments2: cs.Seg: ", cs.Seg, ", period:", period, ", cs.Seg == period: ", (cs.Seg == period))
 
 		if cs.Seg == period {
 			curSegStartTime = cs.StartTime
