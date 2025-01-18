@@ -197,8 +197,8 @@ func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura
 
 		if cs.Seg == period {
 			curSegStartTime = cs.StartTime
+			break
 		}
-		break
 	}
 	logrus.Warn("curSegStartTime:", curSegStartTime)
 	curTm, _ := time.ParseInLocation("2006-01-02 15:04.000", curSegStartTime, time.Local)
