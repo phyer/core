@@ -10,4 +10,4 @@ git submodule update --force --recursive --init --remote
 go mod tidy
 go mod vendor
 
-
+加入内网gitea库
