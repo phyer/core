@@ -534,7 +534,9 @@ func (cl *Candle) SetToKey(core *Core) ([]interface{}, error) {
 		logrus.Error("err of PeriodToMinutes:", err)
 	}
 	// expf := float64(exp) * 60
-	expf := float64(exp) * 300
+	length, _ := core.Cfg.Config.Get("sortedSet").Get("length").String()
+	ln := ToFloat64(length)
+	expf := float64(exp) * ln
 	extt := time.Duration(expf) * time.Minute
 	curVolstr, _ := data[5].(string)
 	curVol, err := strconv.ParseFloat(curVolstr, 64)

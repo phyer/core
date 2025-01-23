@@ -699,7 +699,9 @@ func (cr *Core) GetExpiration(per string) (time.Duration, error) {
 		return 0, err
 	}
 	exp, err := cr.PeriodToMinutes(per)
-	dur := time.Duration(exp*300) * time.Minute
+	length, _ := cr.Cfg.Config.Get("sortedSet").Get("length").String()
+	ln := ToInt64(length)
+	dur := time.Duration(exp*ln) * time.Minute
 	return dur, err
 }
 
