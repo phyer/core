@@ -136,13 +136,12 @@ func (mxl *MaXList) RPush(sm *MaX) (Sample, error) {
 		mxl.List = append(mxl.List, sm)
 		return nil, nil
 	}
-	return nil, nil
 }
 
 // 冒泡排序
 func (mxl *MaXList) RecursiveBubbleS(length int, ctype string) error {
 	if length == 0 {
-		return nil
+		return errors.New("length is zero")
 	}
 	realLength := len(mxl.List)
 	//FIXME：在对这个List进行排序时，List中途长度变了，就会报错：
@@ -166,6 +165,6 @@ func (mxl *MaXList) RecursiveBubbleS(length int, ctype string) error {
 		}
 	}
 	length--
-	mxl.RecursiveBubbleS(length, ctype)
-	return nil
+	err := mxl.RecursiveBubbleS(length, ctype)
+	return err
 }

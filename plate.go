@@ -113,19 +113,22 @@ func (pl *Plate) MakeCoaster(cr *Core, period string) error {
 	if err != nil {
 		return err
 	}
-	cdl.RecursiveBubbleS(len(cdl.List), "asc")
+	err = cdl.RecursiveBubbleS(len(cdl.List), "asc")
 	setName7 := "ma7|" + setName
 	setName30 := "ma30|" + setName
 	mxl7, err := cr.GetRangeMaXSortedSet(setName7, pl.Count, lastTime)
 	if err != nil {
 		return err
 	}
-	mxl7.RecursiveBubbleS(len(mxl7.List), "asc")
+	err = mxl7.RecursiveBubbleS(len(mxl7.List), "asc")
+	if err != nil {
+		return err
+	}
 	mxl30, err := cr.GetRangeMaXSortedSet(setName30, pl.Count, lastTime)
 	if err != nil {
 		return err
 	}
-	mxl30.RecursiveBubbleS(len(mxl30.List), "asc")
+	err = mxl30.RecursiveBubbleS(len(mxl30.List), "asc")
 	coaster := Coaster{
 		InstID:     pl.InstID,
 		Period:     period,
