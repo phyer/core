@@ -7,6 +7,8 @@ import (
 	logrus "github.com/sirupsen/logrus"
 
 	"github.com/phyer/core/internal/core"
+	"github.com/phyer/core/internal/models"
+	"github.com/phyer/core/internal/utils"
 	"strconv"
 	"time"
 )
@@ -38,14 +40,14 @@ type WillMX struct {
 }
 
 func (mx MaX) SetToKey(cr *core.Core) ([]interface{}, error) {
-	// fmt.Println(utils.GetFuncName(), " step1 ", mx.InstID, " ", mx.Period)
+	// fmt.Println(utils.utils.GetFuncName(), " step1 ", mx.InstID, " ", mx.Period)
 	// mx.Timestamp, _ = Int64ToTime(mx.Ts)
 	cstr := strconv.Itoa(mx.Count)
 	tss := strconv.FormatInt(mx.Ts, 10)
 	//校验时间戳是否合法
 	ntm, err := cr.PeriodToLastTime(mx.Period, time.UnixMilli(mx.Ts))
 	if ntm.UnixMilli() != mx.Ts {
-		logrus.Warn(fmt.Sprint(GetFuncName(), " candles时间戳有问题 ", " 应该: ", ntm, "实际:", mx.Ts))
+		logrus.Warn(fmt.Sprint(utils.GetFuncName(), " candles时间戳有问题 ", " 应该: ", ntm, "实际:", mx.Ts))
 		mx.Ts = ntm.UnixMilli()
 	}
 	keyName := "ma" + cstr + "|candle" + mx.Period + "|" + mx.InstID + "|ts:" + tss
@@ -60,7 +62,7 @@ func (mx MaX) SetToKey(cr *core.Core) ([]interface{}, error) {
 		logrus.Error("max SetToKey err: ", err)
 		return mx.Data, err
 	}
-	// fmt.Println(utils.GetFuncName(), " step2 ", mx.InstID, " ", mx.Period)
+	// fmt.Println(utils.utils.GetFuncName(), " step2 ", mx.InstID, " ", mx.Period)
 	// tm := time.UnixMilli(mx.Ts).Format("01-02 15:04")
 	cli := cr.RedisLocalCli
 	if len(string(dj)) == 0 {
@@ -68,13 +70,13 @@ func (mx MaX) SetToKey(cr *core.Core) ([]interface{}, error) {
 		err := errors.New("data is block")
 		return mx.Data, err
 	}
-	// fmt.Println(utils.GetFuncName(), " step3 ", mx.InstID, " ", mx.Period)
+	// fmt.Println(utils.utils.GetFuncName(), " step3 ", mx.InstID, " ", mx.Period)
 	_, err = cli.Set(keyName, dj, extt).Result()
 	if err != nil {
-		logrus.Error(GetFuncName(), " maXSetToKey err:", err)
+		logrus.Error(utils.GetFuncName(), " maXSetToKey err:", err)
 		return mx.Data, err
 	}
-	// fmt.Println(utils.GetFuncName(), " step4 ", mx.InstID, " ", mx.Period)
+	// fmt.Println(utils.utils.GetFuncName(), " step4 ", mx.InstID, " ", mx.Period)
 	// fmt.Println("max setToKey: ", keyName, "res:", res, "data:", string(dj), "from: ", mx.From)
 	cr.SaveUniKey(mx.Period, keyName, extt, mx.Ts)
 	return mx.Data, err
@@ -94,7 +96,7 @@ func Int64ToTime(ts int64) (time.Time, error) {
 	t = t.In(loc)
 	return t, nil
 }
-func (mx *MaX) PushToWriteLogChan(cr *Core) error {
+func (mx *MaX) PushToWriteLogChan(cr *core.Core) error {
 	s := strconv.FormatFloat(float64(mx.Ts), 'f', 0, 64)
 	did := "ma" + ToString(mx.Count) + "|" + mx.InstID + "|" + mx.Period + "|" + s
 	logrus.Debug("did of max:", did)
@@ -113,7 +115,7 @@ func (mx *MaX) PushToWriteLogChan(cr *Core) error {
 // TODO
 // 返回：
 // Sample：被顶出队列的元素
-func (mxl *MaXList) RPush(sm *MaX) (Sample, error) {
+func (mxl *MaXList) RPush(sm *MaX) (models.Sample, error) {
 	last := MaX{}
 	bj, _ := json.Marshal(*sm)
 	json.Unmarshal(bj, &sm)
@@ -171,7 +173,7 @@ func (mxl *MaXList) RecursiveBubbleS(length int, ctype string) error {
 }
 
 // TODO pixel
-func (mxl *MaXList) MakePixelList(cr *Core, mx *MaX, score float64) (*PixelList, error) {
+func (mxl *MaXList) MakePixelList(cr *core.Core, mx *MaX, score float64) (*core.PixelList, error) {
 	if len(mx.Data) == 2 {
 		err := errors.New("ma30 原始数据不足30条")
 		return nil, err
@@ -180,14 +182,14 @@ func (mxl *MaXList) MakePixelList(cr *Core, mx *MaX, score float64) (*PixelList,
 		err := errors.New("ma30 原始数据不足30条")
 		return nil, err
 	}
-	pxl := PixelList{
+	pxl := core.PixelList{
 		Count:          mxl.Count,
 		UpdateNickName: mxl.UpdateNickName,
 		LastUpdateTime: mxl.LastUpdateTime,
-		List:           []*Pixel{},
+		List:           []*core.Pixel{},
 	}
 	for i := 0; i < mxl.Count; i++ {
-		pix := Pixel{}
+		pix := core.Pixel{}
 		pxl.List = append(pxl.List, &pix)
 	}
 	ma30Val := (mx.Data[1]).(float64)
