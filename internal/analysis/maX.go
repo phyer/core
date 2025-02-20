@@ -1,11 +1,12 @@
-package core
+package analysis
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
 	logrus "github.com/sirupsen/logrus"
-	// "os"
+
+	"github.com/phyer/core/internal/core"
 	"strconv"
 	"time"
 )
@@ -36,7 +37,7 @@ type WillMX struct {
 	Count   int
 }
 
-func (mx MaX) SetToKey(cr *Core) ([]interface{}, error) {
+func (mx MaX) SetToKey(cr *core.Core) ([]interface{}, error) {
 	// fmt.Println(utils.GetFuncName(), " step1 ", mx.InstID, " ", mx.Period)
 	// mx.Timestamp, _ = Int64ToTime(mx.Ts)
 	cstr := strconv.Itoa(mx.Count)
@@ -100,7 +101,7 @@ func (mx *MaX) PushToWriteLogChan(cr *Core) error {
 	hs := HashString(did)
 	mx.Id = hs
 	md, _ := json.Marshal(mx)
-	wg := WriteLog{
+	wg := logger.WriteLog{
 		Content: md,
 		Tag:     "sardine.log.maX." + mx.Period,
 		Id:      hs,
@@ -167,4 +168,39 @@ func (mxl *MaXList) RecursiveBubbleS(length int, ctype string) error {
 	length--
 	err := mxl.RecursiveBubbleS(length, ctype)
 	return err
+}
+
+// TODO pixel
+func (mxl *MaXList) MakePixelList(cr *Core, mx *MaX, score float64) (*PixelList, error) {
+	if len(mx.Data) == 2 {
+		err := errors.New("ma30 原始数据不足30条")
+		return nil, err
+	}
+	if mx.Data[2] != float64(30) {
+		err := errors.New("ma30 原始数据不足30条")
+		return nil, err
+	}
+	pxl := PixelList{
+		Count:          mxl.Count,
+		UpdateNickName: mxl.UpdateNickName,
+		LastUpdateTime: mxl.LastUpdateTime,
+		List:           []*Pixel{},
+	}
+	for i := 0; i < mxl.Count; i++ {
+		pix := Pixel{}
+		pxl.List = append(pxl.List, &pix)
+	}
+	ma30Val := (mx.Data[1]).(float64)
+	realLens := len(mxl.List)
+	cha := mxl.Count - realLens
+	// fmt.Println("mxl.Count: ", mxl.Count, "realLens: ", realLens)
+	for h := mxl.Count - 1; h-cha >= 0; h-- {
+		// Count 是希望值,比如24，realLens是实际值, 如果希望值和实际值相等，cha就是0
+		cdLast := mxl.List[h-cha].Data[1]
+		pxl.List[h].Y = (cdLast.(float64) - ma30Val) / ma30Val / score
+		pxl.List[h].X = float64(h)
+		pxl.List[h].Score = cdLast.(float64)
+		pxl.List[h].TimeStamp = int64(mxl.List[h-cha].Data[0].(float64))
+	}
+	return &pxl, nil
 }

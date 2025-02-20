@@ -1,4 +1,4 @@
-package core
+package logger
 
 import (
 	"bytes"
@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	// "github.com/phyer/core/internal/core"
 	logrus "github.com/sirupsen/logrus"
 )
 
@@ -15,7 +16,7 @@ type WriteLog struct {
 	Id      string
 }
 
-func (wg *WriteLog) Process(cr *Core) error {
+func (wg *WriteLog) Process(cr *core.Core) error {
 	go func() {
 		reqBody := bytes.NewBuffer(wg.Content)
 		cr.Env = os.Getenv("GO_ENV")

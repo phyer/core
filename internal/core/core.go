@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
-	// "math/rand"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -15,8 +13,6 @@ import (
 	"sync"
 	"time"
 
-	// simple "github.com/bitly/go-simplejson"
-	// "v5sdk_go/ws/wImpl"
 	"github.com/go-redis/redis"
 	"github.com/phyer/texus/private"
 	"github.com/phyer/v5sdkgo/rest"
@@ -41,13 +37,13 @@ type Core struct {
 	StockRsiProcessChan  chan *StockRsi
 	TickerInforocessChan chan *TickerInfo
 	CoasterChan          chan *CoasterInfo
-	//	SeriesChan           chan *SeriesInfo
-	//	SegmentItemChan      chan *SegmentItem
-	MakeMaXsChan chan *Candle
-	//	ShearForceGrpChan    chan *ShearForceGrp
-	InvokeRestQueueChan chan *RestQueue
-	RedisLocal2Cli      *redis.Client
-	RestQueueChan       chan *RestQueue
+	SeriesChan           chan *SeriesInfo  // to be init
+	SegmentItemChan      chan *SegmentItem // to be init
+	MakeMaXsChan         chan *Candle
+	ShearForceGrpChan    chan *ShearForceGrp // to be init
+	InvokeRestQueueChan  chan *RestQueue
+	RedisLocal2Cli       *redis.Client
+	RestQueueChan        chan *RestQueue
 	RestQueue
 	WriteLogChan chan *WriteLog
 }
@@ -870,4 +866,44 @@ func (cr *Core) GetCoasterFromPlate(instID string, period string) (Coaster, erro
 	co := pl.CoasterMap["period"+period]
 
 	return co, nil
+}
+
+func (core *Core) GetPixelSeries(instId string, period string) (Series, error) {
+	srs := Series{}
+	srName := instId + "|" + period + "|series"
+	cli := core.RedisLocalCli
+	srsStr, err := cli.Get(srName).Result()
+	if err != nil {
+		return *new(Series), err
+	}
+	err = json.Unmarshal([]byte(srsStr), &srs)
+	if err != nil {
+		return *new(Series), err
+	}
+	logrus.Info("sei:", srsStr)
+	err = srs.CandleSeries.RecursiveBubbleS(srs.CandleSeries.Count, "asc")
+	if err != nil {
+		return *new(Series), err
+	}
+	// err = srs.CandleSeries.RecursiveBubbleX(srs.CandleSeries.Count, "asc")
+	// if err != nil {
+	// return nil, err
+	// }
+	err = srs.Ma7Series.RecursiveBubbleS(srs.CandleSeries.Count, "asc")
+	if err != nil {
+		return *new(Series), err
+	}
+	// err = srs.Ma7Series.RecursiveBubbleX(srs.CandleSeries.Count, "asc")
+	// if err != nil {
+	// return nil, err
+	// }
+	err = srs.Ma30Series.RecursiveBubbleS(srs.CandleSeries.Count, "asc")
+	if err != nil {
+		return *new(Series), err
+	}
+	// err = srs.Ma30Series.RecursiveBubbleX(srs.CandleSeries.Count, "asc")
+	// if err != nil {
+	// return nil, err
+	// }
+	return srs, nil
 }

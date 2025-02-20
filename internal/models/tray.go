@@ -1,22 +1,22 @@
-package core
+package model
 
 import (
 	"encoding/json"
 )
 
 type Tray struct {
-	InstID         string  `json:"instId,string"`
-	Period         string  `json:"period,string"`
-	Count          int     `json:"count,number"`
-	Scale          float64 `json:"scale,number"`
-	LastUpdateTime int64   `json:"lastUpdateTime,number"`
-	// SeriesMap      map[string]*Series `json:"seriesMap"`
+	InstID         string             `json:"instId,string"`
+	Period         string             `json:"period,string"`
+	Count          int                `json:"count,number"`
+	Scale          float64            `json:"scale,number"`
+	LastUpdateTime int64              `json:"lastUpdateTime,number"`
+	SeriesMap      map[string]*Series `json:"seriesMap"`
 }
 
 type PixelSeries struct {
 	Count   int64    `json:"count"`
 	Section int64    `json:"section"`
-	List    []*Pixel `json:"list"`
+	List    []*analysis/Pixel `json:"list"`
 }
 
 func (tr *Tray) Init(instId string) {
@@ -43,18 +43,18 @@ func (tr *Tray) Analytics(cr *Core) {
 }
 
 // TODO 实例化一个series
-// func (tr *Tray) NewSeries(cr *Core, period string) (*Series, error) {
-// 	sr := Series{
-// 		InstID:       tr.InstID,
-// 		Period:       period,
-// 		Count:        tr.Count,
-// 		Scale:        tr.Scale,
-// 		CandleSeries: &PixelList{},
-// 		Ma7Series:    &PixelList{},
-// 		Ma30Series:   &PixelList{},
-// 	}
-// 	// 自我更新
-// 	err := sr.Refresh(cr)
-// 	tr.SeriesMap["period"+period] = &sr
-// 	return &sr, err
-// }
+func (tr *Tray) NewSeries(cr *Core, period string) (*Series, error) {
+	sr := Series{
+		InstID:       tr.InstID,
+		Period:       period,
+		Count:        tr.Count,
+		Scale:        tr.Scale,
+		CandleSeries: &PixelList{},
+		Ma7Series:    &PixelList{},
+		Ma30Series:   &PixelList{},
+	}
+	// 自我更新
+	err := sr.Refresh(cr)
+	tr.SeriesMap["period"+period] = &sr
+	return &sr, err
+}

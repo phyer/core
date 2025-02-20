@@ -1,4 +1,4 @@
-package core
+package market
 
 import (
 	"encoding/json"
@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"strconv"
 	"time"
+
+	"github.com/phyer/core/internal/utils" // 新增
 )
 
 type TickerInfo struct {
@@ -28,7 +30,7 @@ type TickerInfoResp struct {
 
 func (tir *TickerInfoResp) Convert() TickerInfo {
 	ti := TickerInfo{
-		Id:         HashString(tir.InstID + tir.Ts),
+		Id:         utils.HashString(tir.InstID + tir.Ts),
 		InstID:     tir.InstID,
 		InstType:   tir.InstType,
 		Last:       ToFloat64(tir.Last),
