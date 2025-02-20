@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/phyer/core/internal/core"
 	logrus "github.com/sirupsen/logrus"
 )
 
@@ -21,11 +22,11 @@ type SegmentItem struct {
 	PolarQuadrant     string // shangxian，manyue，xiaxian,xinyue， 分别对应圆周的四个阶段。
 	LastUpdate        int64
 	ExtremumPixels    *Extremum     // 极值 是两个pixel对象
-	FirstPixel        *Pixel        // 起始值，最后的pixel对象
-	LastPixel         *Pixel        // 最后值，最后的maX pixel对象
-	LastCandle        *Pixel        // 最后值，最后的Candle的pixel对象
-	LastMa7           *Pixel        // 最后值，最后的Ma7的pixel对象
-	LastMa30          *Pixel        // 最后值，最后的Ma30的pixel对象
+	FirstPixel        *core.Pixel   // 起始值，最后的pixel对象
+	LastPixel         *core.Pixel   // 最后值，最后的maX pixel对象
+	LastCandle        *core.Pixel   // 最后值，最后的Candle的pixel对象
+	LastMa7           *core.Pixel   // 最后值，最后的Ma7的pixel对象
+	LastMa30          *core.Pixel   // 最后值，最后的Ma30的pixel对象
 	VerticalElevation float64       // 仰角, Interval范围内线段的仰角
 	StartIdx          int           // 开始的坐标
 	EndIdx            int           // 结束的坐标
@@ -52,8 +53,8 @@ const XIAOXIAXIANYUE = "xiaoxiaxianyue"
 const tinySeg = 0.1
 
 type Extremum struct {
-	Max *Pixel
-	Min *Pixel
+	Max *core.Pixel
+	Min *core.Pixel
 }
 
 func CalPolar(e0 float64, e1 float64, e2 float64) string {
@@ -258,8 +259,8 @@ func (seg *SegmentItem) Process(cr *Core) {
 	}()
 }
 
-func (srs *Series) MakeSegment(cr *Core, start int, end int, subArys [][]int, ctype string) *SegmentItem {
-	list := []*Pixel{}
+func (srs *Series) MakeSegment(cr *core.Core, start int, end int, subArys [][]int, ctype string) *SegmentItem {
+	list := []*core.Pixel{}
 	if ctype == "ma7" {
 		list = srs.Ma7Series.List
 	}

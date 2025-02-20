@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
+	"github.com/phyer/core/internal/core"
 	logrus "github.com/sirupsen/logrus"
 )
 

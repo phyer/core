@@ -11,6 +11,9 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
+	"github.com/phyer/core/internal/core"
+	"github.com/phyer/core/internal/models"
+	"github.com/phyer/core/internal/utils"
 	logrus "github.com/sirupsen/logrus"
 )
 
@@ -21,10 +24,10 @@ type Series struct {
 	Scale          float64 `json:"scale,number"`
 	LastUpdateTime int64   `json:"lastUpdateTime,number"`
 	UpdateNickName string
-	LastCandle1m   Candle     `json:"lastCandle1m"`
-	CandleSeries   *PixelList `json:"candleSerie"`
-	Ma7Series      *PixelList `json:"ma7Serie"`
-	Ma30Series     *PixelList `json:"ma30Serie"`
+	LastCandle1m   *models.Candle  `json:"lastCandle1m"`
+	CandleSeries   *core.PixelList `json:"candleSerie"`
+	Ma7Series      *core.PixelList `json:"ma7Serie"`
+	Ma30Series     *core.PixelList `json:"ma30Serie"`
 }
 
 type SeriesInfo struct {
@@ -64,7 +67,7 @@ type VerticalReportItem struct {
 // }
 
 // 根据instId 和period 从 PlateMap里拿到coaster，创建对应的	series,
-func (sr *Series) Refresh(cr *Core) error {
+func (sr *Series) Refresh(cr *core.Core) error {
 	curCo, err := cr.GetCoasterFromPlate(sr.InstID, sr.Period)
 	if err != nil {
 		return err
@@ -101,7 +104,7 @@ func (sr *Series) Refresh(cr *Core) error {
 	return nil
 }
 
-func (sr *Series) SetToKey(cr *Core) (string, error) {
+func (sr *Series) SetToKey(cr *core.Core) (string, error) {
 	if sr == nil || sr.CandleSeries == nil {
 		return "", errors.New("sr.CandlesSeries == nil")
 	}
@@ -122,12 +125,12 @@ func (sr *Series) SetToKey(cr *Core) (string, error) {
 	seriesName := sr.InstID + "|" + sr.Period + "|series"
 	res, err := cr.RedisLocalCli.Set(seriesName, string(js), 0).Result()
 	if err != nil {
-		logrus.Panic(GetFuncName(), err, " seriesSetToKey1: instId:", sr.InstID, " period: ", sr.Period, " lastUpdate:", sr.LastUpdateTime, " md5:", Md5V(string(js)))
+		logrus.Panic(utils.GetFuncName(), err, " seriesSetToKey1: instId:", sr.InstID, " period: ", sr.Period, " lastUpdate:", sr.LastUpdateTime, " md5:", Md5V(string(js)))
 	}
 	res, err = cr.RedisLocal2Cli.Set(seriesName, string(js), 0).Result()
 	return res, err
 }
-func PrintSerieY(cr *Core, list []redis.Z, period string, count int) {
+func PrintSerieY(cr *core.Core, list []redis.Z, period string, count int) {
 	// fmt.Println("PrintSerieY start")
 	env := os.Getenv("GO_ENV")
 	isProduction := env == "production"
@@ -180,7 +183,7 @@ func PrintSerieY(cr *Core, list []redis.Z, period string, count int) {
 	}
 }
 
-func (sei *SeriesInfo) Process(cr *Core) {
+func (sei *SeriesInfo) Process(cr *core.Core) {
 	curSe, err := cr.GetPixelSeries(sei.InstID, sei.Period)
 	if err != nil {
 		logrus.Warn("GetPixelSeries: ", err)
@@ -260,7 +263,7 @@ func (sei *SeriesInfo) Process(cr *Core) {
 //-------------------------------------------------------------------------------
 
 // 拉扯极限相关： 加入seriesY值排行榜, 用于生成拉扯极限
-func (srs *Series) AddToYSorted(cr *Core) error {
+func (srs *Series) AddToYSorted(cr *core.Core) error {
 	setName := "series|YValue|sortedSet|period" + srs.Period
 	srs.CandleSeries.RecursiveBubbleS(srs.CandleSeries.Count, "asc")
 	length := len(srs.CandleSeries.List)
@@ -290,7 +293,7 @@ func (srs *Series) AddToYSorted(cr *Core) error {
 }
 
 // 垂直极限排名有一定片面性。暂时先不开放。垂直极限推荐最高的，可能是个不太容易📈上来的股票，甚至垃圾股，而且过一会儿可能跌的更多，所以就算使用这个功能，也仅供参考，
-func (vir *VerticalReportItem) AddToVeriticalLimitSorted(cr *Core, srs *Series, period2 string) error {
+func (vir *VerticalReportItem) AddToVeriticalLimitSorted(cr *core.Core, srs *Series, period2 string) error {
 	// redis key: verticalReportItem|BTC-USDT|4H-15m|ts:1643002300000
 	// sortedSet: verticalLimit|2D-4H|rank|sortedSet
 
@@ -316,7 +319,7 @@ func (vir *VerticalReportItem) AddToVeriticalLimitSorted(cr *Core, srs *Series, 
 	return nil
 }
 
-func (vri *VerticalReportItem) Report(cr *Core) error {
+func (vri *VerticalReportItem) Report(cr *core.Core) error {
 	dd := DingdingMsg{
 		Topic:     "垂直极限触发",
 		RobotName: "pengpeng",
@@ -352,7 +355,7 @@ func (vri *VerticalReportItem) Report(cr *Core) error {
 	return nil
 }
 
-func (vri *VerticalReportItem) Show(cr *Core) error {
+func (vri *VerticalReportItem) Show(cr *core.Core) error {
 	ary1 := []string{}
 	str := "``币名: ``" + vri.InstID + "\n"
 	str1 := fmt.Sprintln("``基础维度：``", vri.Period)
@@ -375,7 +378,7 @@ func (vri *VerticalReportItem) Show(cr *Core) error {
 
 // TODO 求某个PixelList里两个点之间的仰角，从ridx开始，往lidx的元素画一条直线，的仰角
 
-func (srs *Series) GetElevation(cr *Core, ctype string, lIdx int, rIdx int) (float64, error) {
+func (srs *Series) GetElevation(cr *core.Core, ctype string, lIdx int, rIdx int) (float64, error) {
 	yj := float64(0)
 	switch ctype {
 	case "candle":
@@ -396,7 +399,7 @@ func (srs *Series) GetElevation(cr *Core, ctype string, lIdx int, rIdx int) (flo
 }
 
 // TODO 求极值，在某个线段上。一个最大值，一个最小值
-func (srs *Series) GetExtremum(cr *Core, lIdx int, rIdx int, ctype string) (*Extremum, error) {
+func (srs *Series) GetExtremum(cr *core.Core, lIdx int, rIdx int, ctype string) (*Extremum, error) {
 	ext := Extremum{
 		Max: &Pixel{},
 		Min: &Pixel{},
@@ -513,13 +516,13 @@ func (srs *Series) GetExtremum(cr *Core, lIdx int, rIdx int, ctype string) (*Ext
 // 存储在sortedSet里，命名：
 // verticalLimit|15m~4H|rank|sortedSet
 // return rank, err
-func (vir *VerticalReportItem) MakeVerticalLimit(cr *Core, srs *Series, startIdx int, endIdx int, period2 string) (err error) {
+func (vir *VerticalReportItem) MakeVerticalLimit(cr *core.Core, srs *Series, startIdx int, endIdx int, period2 string) (err error) {
 	count := len(srs.CandleSeries.List) - 1
 	lastMa30Pixel := srs.Ma30Series.List[count]
-	// func (srs *Series) GetExtremum(cr *Core, lIdx int, rIdx int, ctype string) (*Extremum, error) {
+	// func (srs *Series) GetExtremum(cr *core.Core, lIdx int, rIdx int, ctype string) (*Extremum, error) {
 	ext, err := srs.GetExtremum(cr, startIdx, endIdx, "ma30")
 	if err != nil {
-		logrus.Warn(GetFuncName(), ":", err)
+		logrus.Warn(utils.GetFuncName(), ":", err)
 	}
 
 	if ext.Max.Score < 1.05*lastMa30Pixel.Score {
@@ -533,7 +536,7 @@ func (vir *VerticalReportItem) MakeVerticalLimit(cr *Core, srs *Series, startIdx
 
 	yj, err := srs.GetElevation(cr, "ma30", startIdx, endIdx)
 	if err != nil {
-		logrus.Warn(GetFuncName(), ":", err)
+		logrus.Warn(utils.GetFuncName(), ":", err)
 	}
 
 	vir.VerticalElevation = yj
@@ -549,7 +552,7 @@ func (vir *VerticalReportItem) MakeVerticalLimit(cr *Core, srs *Series, startIdx
 }
 
 // 计算剪切力
-func LacheJixian(cr *Core, srs *Series, period string) (float64, error) {
+func LacheJixian(cr *core.Core, srs *Series, period string) (float64, error) {
 	curSe, _ := cr.GetPixelSeries(srs.InstID, period)
 	return curSe.CandleSeries.List[len(srs.CandleSeries.List)-1].Y, nil
 }
