@@ -1,8 +1,7 @@
-package utils
+package core
 
 import (
 	"crypto/md5"
-	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -10,7 +9,6 @@ import (
 	logrus "github.com/sirupsen/logrus"
 	"math"
 	"math/rand"
-	"reflect"
 	"runtime"
 	"strconv"
 	"time"
@@ -208,48 +206,4 @@ func Md5V(str string) string {
 	h := md5.New()
 	h.Write([]byte(str))
 	return hex.EncodeToString(h.Sum(nil))
-}
-func ToString(val interface{}) string {
-	valstr := ""
-	if reflect.TypeOf(val).Name() == "string" {
-		valstr = val.(string)
-	} else if reflect.TypeOf(val).Name() == "float64" {
-		valstr = fmt.Sprintf("%f", val)
-	} else if reflect.TypeOf(val).Name() == "int64" {
-		valstr = strconv.FormatInt(val.(int64), 16)
-	} else if reflect.TypeOf(val).Name() == "int" {
-		valstr = fmt.Sprintf("%d", val)
-	}
-	return valstr
-}
-
-func ToInt64(val interface{}) int64 {
-	vali := int64(0)
-	if reflect.TypeOf(val).Name() == "string" {
-		vali, _ = strconv.ParseInt(val.(string), 10, 64)
-	} else if reflect.TypeOf(val).Name() == "float64" {
-		vali = int64(val.(float64))
-	}
-	return vali
-}
-
-func ToFloat64(val interface{}) float64 {
-	valf := float64(0)
-	if reflect.TypeOf(val).Name() == "string" {
-		valf, _ = strconv.ParseFloat(val.(string), 64)
-	} else if reflect.TypeOf(val).Name() == "float64" {
-		valf = val.(float64)
-	} else if reflect.TypeOf(val).Name() == "int64" {
-		valf = float64(val.(int64))
-	}
-	return valf
-}
-
-func HashString(input string) string {
-	// 计算SHA-256哈希值
-	hash := sha256.Sum256([]byte(input))
-	// 转换为十六进制字符串
-	hashHex := hex.EncodeToString(hash[:])
-	// 返回前20位
-	return hashHex[:23]
 }

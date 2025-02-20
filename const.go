@@ -1,4 +1,4 @@
-package config
+package core
 
 const MAIN_ALLCOINS_PERIOD_MINUTES = 1
 const MAIN_ALLCOINS_ONCE_COUNTS = 3

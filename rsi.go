@@ -1,4 +1,4 @@
-package analysis
+package core
 
 import (
 	// "crypto/sha256"
@@ -15,15 +15,12 @@ import (
 	// simple "github.com/bitly/go-simplejson"
 	// "github.com/go-redis/redis"
 	// "github.com/phyer/texus/utils"
-	"github.com/phyer/core/internal/core"
-
-	"github.com/phyer/core/internal/utils"
 	logrus "github.com/sirupsen/logrus"
 )
 
 type Rsi struct {
 	Id         string `json:"_id"`
-	core       *core.Core
+	core       *Core
 	InstID     string    `json:"instID"`
 	Period     string    `json:"period"`
 	Timestamp  time.Time `json:"timeStamp"`
@@ -41,7 +38,7 @@ type RsiList struct {
 }
 type StockRsi struct {
 	Id         string `json:"_id"`
-	core       *core.Core
+	core       *Core
 	InstID     string    `json:"instID"`
 	Period     string    `json:"period"`
 	Timestamp  time.Time `json:"timeStamp"`
@@ -59,7 +56,7 @@ type StockRsiList struct {
 	List           []*StockRsi `json:"list"`
 }
 
-func (rsi *Rsi) PushToWriteLogChan(cr *core.Core) error {
+func (rsi *Rsi) PushToWriteLogChan(cr *Core) error {
 	did := rsi.InstID + rsi.Period + ToString(rsi.Ts)
 	rsi.Id = HashString(did)
 	cd, err := json.Marshal(rsi)
@@ -74,9 +71,9 @@ func (rsi *Rsi) PushToWriteLogChan(cr *core.Core) error {
 	cr.WriteLogChan <- &wg
 	return nil
 }
-func (srsi *StockRsi) PushToWriteLogChan(cr *core.Core) error {
+func (srsi *StockRsi) PushToWriteLogChan(cr *Core) error {
 	did := srsi.InstID + srsi.Period + ToString(srsi.Ts)
-	srsi.Id = util.HashString(did)
+	srsi.Id = HashString(did)
 	cd, err := json.Marshal(srsi)
 	if err != nil {
 		logrus.Error("PushToWriteLog json marshal rsi err: ", err)

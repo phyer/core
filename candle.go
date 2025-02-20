@@ -1,6 +1,8 @@
-package models
+package core
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	// "reflect"
@@ -13,14 +15,13 @@ import (
 
 	simple "github.com/bitly/go-simplejson"
 	"github.com/go-redis/redis"
+	"github.com/phyer/texus/utils"
 	logrus "github.com/sirupsen/logrus"
-
-	"github.com/phyer/core/internal/core" // 新增
 )
 
 type Candle struct {
 	Id         string `json:"_id"`
-	core       *core.Core
+	core       *Core
 	InstID     string `json:"instID"`
 	Period     string `json:"period"`
 	Data       []interface{}
@@ -35,7 +36,7 @@ type Candle struct {
 	Confirm    bool      `json:"confirm"`
 }
 type Sample interface {
-	SetToKey(cr *core.Core) ([]interface{}, error)
+	SetToKey(cr *Core) ([]interface{}, error)
 }
 
 type SampleList interface {
@@ -61,7 +62,7 @@ type MatchCheck struct {
 	Matched bool
 }
 
-func (cd *Candle) Filter(cr *core.Core) bool {
+func (cd *Candle) Filter(cr *Core) bool {
 	myFocusList := cr.Cfg.Config.Get("focusList").MustArray()
 	founded := false
 	for _, v := range myFocusList {
@@ -74,6 +75,77 @@ func (cd *Candle) Filter(cr *core.Core) bool {
 }
 func (mc *MatchCheck) SetMatched(value bool) {
 	mc.Matched = value
+}
+
+func (core *Core) GetCandlesWithRest(instId string, kidx int, dura time.Duration, maxCandles int) error {
+	ary := []string{}
+
+	wsary := core.Cfg.CandleDimentions
+	for k, v := range wsary {
+		matched := false
+		// 这个算法的目的是：越靠后的candles维度，被命中的概率越低，第一个百分之百命中，后面开始越来越低, 每分钟都会发生这样的计算，
+		// 因为维度多了的话，照顾不过来
+		rand.New(rand.NewSource(time.Now().UnixNano()))
+		rand.Seed(time.Now().UnixNano())
+		n := (k*2 + 2) * 3
+		if n < 1 {
+			n = 1
+		}
+		b := rand.Intn(n)
+		if b < 8 {
+			matched = true
+		}
+		if matched {
+			ary = append(ary, v)
+		}
+	}
+
+	mdura := dura/(time.Duration(len(ary)+1)) - 50*time.Millisecond
+	// fmt.Println("loop4 Ticker Start instId, dura: ", instId, dura, dura/10, mdura, len(ary), " idx: ", kidx)
+	// time.Duration(len(ary)+1)
+	ticker := time.NewTicker(mdura)
+	done := make(chan bool)
+	idx := 0
+	go func(i int) {
+		for {
+			select {
+			case <-ticker.C:
+				if i >= (len(ary)) {
+					done <- true
+					break
+				}
+				rand.Seed(time.Now().UnixNano())
+				b := rand.Intn(2)
+				maxCandles = maxCandles * (i + b) * 2
+
+				if maxCandles < 3 {
+					maxCandles = 3
+				}
+				if maxCandles > 30 {
+					maxCandles = 30
+				}
+				mx := strconv.Itoa(maxCandles)
+				// fmt.Println("loop4 getCandlesWithRest, instId, period,limit,dura, t: ", instId, ary[i], mx, mdura)
+				go func(ii int) {
+					restQ := RestQueue{
+						InstId:   instId,
+						Bar:      ary[ii],
+						Limit:    mx,
+						Duration: mdura,
+						WithWs:   true,
+					}
+					js, _ := json.Marshal(restQ)
+					core.RedisLocalCli.LPush("restQueue", js)
+				}(i)
+				i++
+			}
+		}
+	}(idx)
+	time.Sleep(dura - 10*time.Millisecond)
+	ticker.Stop()
+	// fmt.Println("loop4 Ticker stopped instId, dura: ", instId, dura, mdura)
+	done <- true
+	return nil
 }
 
 // 当前的时间毫秒数 对于某个时间段，比如3分钟，10分钟，是否可以被整除，
@@ -105,7 +177,7 @@ func IsModOf(curInt int64, duration time.Duration) bool {
 	return false
 }
 
-func (core *core.Core) SaveCandle(instId string, period string, rsp *CandleData, dura time.Duration, withWs bool) {
+func (core *Core) SaveCandle(instId string, period string, rsp *CandleData, dura time.Duration, withWs bool) {
 	leng := len(rsp.Data)
 	// fmt.Println("saveCandle leng: ", leng, " instId: ", instId, " period: ", period)
 	logrus.Info("saveCandles leng: ", leng, " instId: ", instId, " period: ", period, " length of rsp.Data: ", len(rsp.Data))
@@ -183,7 +255,7 @@ func (core *core.Core) SaveCandle(instId string, period string, rsp *CandleData,
 	}
 }
 
-func (candle *Candle) PushToWriteLogChan(cr *core.Core) error {
+func (candle *Candle) PushToWriteLogChan(cr *Core) error {
 	did := candle.InstID + candle.Period + candle.Data[0].(string)
 	candle.Id = HashString(did)
 	cl, _ := candle.ToStruct(cr)
@@ -211,7 +283,16 @@ func Daoxu(arr []interface{}) {
 		arr[length-1-i] = temp
 	}
 }
-func (cl *Candle) ToStruct(core *core.Core) (*Candle, error) {
+func HashString(input string) string {
+	// 计算SHA-256哈希值
+	hash := sha256.Sum256([]byte(input))
+	// 转换为十六进制字符串
+	hashHex := hex.EncodeToString(hash[:])
+	// 返回前20位
+	return hashHex[:23]
+}
+
+func (cl *Candle) ToStruct(core *Core) (*Candle, error) {
 	// cl.Timestamp
 	// 将字符串转换为 int64 类型的时间戳
 	ts, err := strconv.ParseInt(cl.Data[0].(string), 10, 64)
@@ -258,7 +339,181 @@ func (cl *Candle) ToStruct(core *core.Core) (*Candle, error) {
 	return cl, nil
 }
 
-func (cl *Candle) SetToKey(core *core.Core) ([]interface{}, error) {
+// 保证同一个 period, keyName ，在一个周期里，SaveToSortSet只会被执行一次
+func (core *Core) SaveUniKey(period string, keyName string, extt time.Duration, tsi int64) {
+
+	refName := keyName + "|refer"
+	// refRes, _ := core.RedisLocalCli.GetSet(refName, 1).Result()
+	core.RedisLocalCli.Expire(refName, extt)
+	// 为保证唯一性机制，防止SaveToSortSet 被重复执行, ps: 不需要唯一，此操作幂等在redis里
+	// founded, _ := core.findInSortSet(period, keyName, extt, tsi)
+	// if len(refRes) != 0 {
+	// 	logrus.Error("refName exist: ", refName)
+	// 	return
+	// }
+	core.SaveToSortSet(period, keyName, extt, tsi)
+}
+
+func (core *Core) findInSortSet(period string, keyName string, extt time.Duration, tsi int64) (bool, error) {
+	founded := false
+	ary := strings.Split(keyName, "ts:")
+	setName := ary[0] + "sortedSet"
+	opt := redis.ZRangeBy{
+		Min: ToString(tsi),
+		Max: ToString(tsi),
+	}
+	rs, err := core.RedisLocalCli.ZRangeByScore(setName, opt).Result()
+	if len(rs) > 0 {
+		founded = true
+	}
+	if err != nil {
+		logrus.Error("err of ma7|ma30 add to redis:", err)
+	} else {
+		logrus.Info("sortedSet added to redis:", rs, keyName)
+	}
+	return founded, nil
+}
+
+// tsi: 上报时间timeStamp millinSecond
+func (core *Core) SaveToSortSet(period string, keyName string, extt time.Duration, tsi int64) {
+	ary := strings.Split(keyName, "ts:")
+	setName := ary[0] + "sortedSet"
+	z := redis.Z{
+		Score:  float64(tsi),
+		Member: keyName,
+	}
+	rs, err := core.RedisLocalCli.ZAdd(setName, z).Result()
+	if err != nil {
+		logrus.Warn("err of ma7|ma30 add to redis:", err)
+	} else {
+		logrus.Warn("sortedSet added to redis:", rs, keyName)
+	}
+}
+
+// 根据周期的文本内容，返回这代表多少个分钟
+func (cr *Core) PeriodToMinutes(period string) (int64, error) {
+	ary := strings.Split(period, "")
+	beiStr := "1"
+	danwei := ""
+	if len(ary) == 0 {
+		err := errors.New(utils.GetFuncName() + " period is block")
+		return 0, err
+	}
+	if len(ary) == 3 {
+		beiStr = ary[0] + ary[1]
+		danwei = ary[2]
+	} else {
+		beiStr = ary[0]
+		danwei = ary[1]
+	}
+	cheng := 1
+	bei, _ := strconv.Atoi(beiStr)
+	switch danwei {
+	case "m":
+		{
+			cheng = bei
+			break
+		}
+	case "H":
+		{
+			cheng = bei * 60
+			break
+		}
+	case "D":
+		{
+			cheng = bei * 60 * 24
+			break
+		}
+	case "W":
+		{
+			cheng = bei * 60 * 24 * 7
+			break
+		}
+	case "M":
+		{
+			cheng = bei * 60 * 24 * 30
+			break
+		}
+	case "Y":
+		{
+			cheng = bei * 60 * 24 * 365
+			break
+		}
+	default:
+		{
+			logrus.Warning("notmatch:", danwei, period)
+			panic("notmatch:" + period)
+		}
+	}
+	return int64(cheng), nil
+}
+
+// type ScanCmd struct {
+// baseCmd
+//
+// page   []string
+// cursor uint64
+//
+// process func(cmd Cmder) error
+// }
+func (core *Core) GetRangeKeyList(pattern string, from time.Time) ([]*simple.Json, error) {
+	// 比如，用来计算ma30或ma7，倒推多少时间范围，
+	redisCli := core.RedisLocalCli
+	cursor := uint64(0)
+	n := 0
+	allTs := []int64{}
+	var keys []string
+	for {
+		var err error
+		keys, cursor, _ = redisCli.Scan(cursor, pattern+"*", 2000).Result()
+		if err != nil {
+			panic(err)
+		}
+		n += len(keys)
+		if n == 0 {
+			break
+		}
+	}
+
+	// keys, _ := redisCli.Keys(pattern + "*").Result()
+	for _, key := range keys {
+		keyAry := strings.Split(key, ":")
+		key = keyAry[1]
+		keyi64, _ := strconv.ParseInt(key, 10, 64)
+		allTs = append(allTs, keyi64)
+	}
+	nary := utils.RecursiveBubble(allTs, len(allTs))
+	tt := from.UnixMilli()
+	ff := tt - tt%60000
+	fi := int64(ff)
+	mary := []int64{}
+	for _, v := range nary {
+		if v < fi {
+			break
+		}
+		mary = append(mary, v)
+	}
+	res := []*simple.Json{}
+	for _, v := range mary {
+		// if k > 1 {
+		// break
+		// }
+		nv := pattern + strconv.FormatInt(v, 10)
+		str, err := redisCli.Get(nv).Result()
+		if err != nil {
+			logrus.Error("err of redis get key:", nv, err)
+		}
+		cur, err := simple.NewJson([]byte(str))
+		if err != nil {
+			logrus.Error("err of create newJson:", str, err)
+		}
+		res = append(res, cur)
+	}
+
+	return res, nil
+}
+
+func (cl *Candle) SetToKey(core *Core) ([]interface{}, error) {
 	data := cl.Data
 	tsi, err := strconv.ParseInt(data[0].(string), 10, 64)
 
@@ -365,63 +620,5 @@ func (cdl *CandleList) RPush(sp *Candle) (Sample, error) {
 		bj, err := json.Marshal(sp)
 		logrus.Debug("candleList RPush insert: ", string(bj), "len(cdl.List): ", len(cdl.List), "cdl.Count:", cdl.Count)
 		return nil, err
-	}
-}
-
-// TODO pixel
-func (cdl *CandleList) MakePixelList(cr *core.Core, mx *MaX, score float64) (*PixelList, error) {
-	if mx.Data[2] != float64(30) {
-		err := errors.New("ma30 原始数据不足30条")
-		return nil, err
-	}
-	pxl := PixelList{
-		Count:          cdl.Count,
-		UpdateNickName: cdl.UpdateNickName,
-		LastUpdateTime: cdl.LastUpdateTime,
-		List:           []*Pixel{},
-	}
-	realLens := len(cdl.List)
-	cha := cdl.Count - realLens
-	for i := 0; i < 24; i++ {
-		pix := Pixel{}
-		pxl.List = append(pxl.List, &pix)
-	}
-	ma30Val := ToFloat64(mx.Data[1])
-	for h := cdl.Count - 1; h-cha >= 0; h-- {
-		// Count 是希望值,比如24，realLens是实际值, 如果希望值和实际值相等，cha就是0
-		cdLast := cdl.List[h-cha].Data[4]
-		cdLastf := ToFloat64(cdLast)
-		cdOpen := cdl.List[h-cha].Data[1]
-		cdOpenf := ToFloat64(cdOpen)
-		cdHigh := cdl.List[h-cha].Data[2]
-		cdHighf := ToFloat64(cdHigh)
-		cdLow := cdl.List[h-cha].Data[3]
-		cdLowf := ToFloat64(cdLow)
-
-		yCandle := YCandle{
-			Open:  (cdOpenf - ma30Val) / ma30Val / score,
-			High:  (cdHighf - ma30Val) / ma30Val / score,
-			Low:   (cdLowf - ma30Val) / ma30Val / score,
-			Close: (cdLastf - ma30Val) / ma30Val / score,
-		}
-		tmi := ToInt64(cdl.List[h-cha].Data[0])
-		pxl.List[h].Y = (cdLastf - ma30Val) / ma30Val / score
-		pxl.List[h].X = float64(h)
-		pxl.List[h].YCandle = yCandle
-		pxl.List[h].Score = cdLastf
-		pxl.List[h].TimeStamp = tmi
-	}
-
-	return &pxl, nil
-}
-func (cr *core.Core) AddToGeneralSeriesInfoChnl(sr *SeriesInfo) {
-	redisCli := cr.RedisLocalCli
-	ab, _ := json.Marshal(sr)
-	if len(string(ab)) == 0 {
-		return
-	}
-	_, err := redisCli.Publish(ALLSERIESINFO_PUBLISH, string(ab)).Result()
-	if err != nil {
-		logrus.Debug("err of seriesinfo add to redis2:", err, sr.InstID, sr.Period)
 	}
 }
