@@ -1,4 +1,4 @@
-package core
+package model
 
 import (
 	"crypto/sha256"
@@ -15,13 +15,14 @@ import (
 
 	simple "github.com/bitly/go-simplejson"
 	"github.com/go-redis/redis"
+	"github.com/phyer/core/core"
 	"github.com/phyer/texus/utils"
 	logrus "github.com/sirupsen/logrus"
 )
 
 type Candle struct {
 	Id         string `json:"_id"`
-	core       *Core
+	core       *core.Core
 	InstID     string `json:"instID"`
 	Period     string `json:"period"`
 	Data       []interface{}

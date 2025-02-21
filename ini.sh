@@ -1,23 +1,35 @@
-# Create standard Go project directories
-mkdir -p api/v1          # For API contracts/protos
-mkdir -p configs         # For configuration files
-mkdir -p scripts         # For deployment/build scripts
-mkdir -p test/e2e        # For different test types
-mkdir -p third_party     # For third party dependencies
+#!/bin/bash
 
-# Reorganize existing directories
-mv pkg/config internal/          # Move config to internal implementation
-mv pkg/log internal/logger       # Move logging to internal
-mv pkg/utils internal/           # Move utilities to internal
+# 创建目录结构
+mkdir -p config model service data util
 
-# Create new service layer
-mkdir -p internal/service        # For business logic services
-mkdir -p internal/repository     # For data access layer
-mkdir -p internal/transport      # For HTTP/gRPC handlers
+# 移动配置文件
+mv core/shared/config/config.go config/
+mv core/shared/config/const.go config/
 
-# Cleanup empty directories
-rmdir pkg 2>/dev/null || true
+# 移动模型文件
+mv core/models/candle.go model/
+mv core/models/maX.go model/
+mv core/models/ticker.go model/
 
-# Update build script
-echo '#!/bin/sh
-go build -ldflags "-s -w" -trimpath -o ./bin/core ./cmd/core' > build.sh
+# 移动服务文件
+mv core/services/service_context.go service/
+
+# 移动数据层文件
+mv core/datapipes/coaster.go data/
+mv core/datapipes/pixel.go data/
+mv core/datapipes/plate.go data/
+mv core/datapipes/rsi.go data/
+mv core/datapipes/segmentItem.go data/
+mv core/datapipes/series.go data/
+mv core/datapipes/shearForceGrp.go data/
+mv core/datapipes/sorted.go data/
+mv core/datapipes/tray.go data/
+
+# 移动工具类文件
+mv core/shared/util.go util/
+mv core/shared/logging/writeLog.go util/
+
+echo "文件迁移完成！新目录结构："
+tree -d .
+

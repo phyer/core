@@ -18,16 +18,20 @@ import (
 	// simple "github.com/bitly/go-simplejson"
 	// "v5sdk_go/ws/wImpl"
 	"github.com/go-redis/redis"
+	"github.com/phyer/core/model"
 	"github.com/phyer/texus/private"
 	"github.com/phyer/v5sdkgo/rest"
 	logrus "github.com/sirupsen/logrus"
 )
 
 type Core struct {
-	Env                  string
-	Cfg                  *MyConfig
-	RedisLocalCli        *redis.Client
-	RedisRemoteCli       *redis.Client
+	Env        string
+	Config     ConfigProvider // 改为接口类型
+	Redis      RedisConnector // 改为接口类型
+	HTTPClient HTTPClient     // 改为接口类型
+	Logger     Logger         // 改为接口类型
+
+	// 保留原有的运行时字段
 	FluentBitUrl         string
 	PlateMap             map[string]*Plate
 	TrayMap              map[string]*Tray
@@ -35,21 +39,54 @@ type Core struct {
 	Mu                   *sync.Mutex
 	Mu1                  *sync.Mutex
 	Waity                *sync.WaitGroup
-	CandlesProcessChan   chan *Candle
+	CandlesProcessChan   chan *model.Candle
 	MaXProcessChan       chan *MaX
 	RsiProcessChan       chan *Rsi
 	StockRsiProcessChan  chan *StockRsi
 	TickerInforocessChan chan *TickerInfo
 	CoasterChan          chan *CoasterInfo
-	//	SeriesChan           chan *SeriesInfo
-	//	SegmentItemChan      chan *SegmentItem
-	MakeMaXsChan chan *Candle
-	//	ShearForceGrpChan    chan *ShearForceGrp
-	InvokeRestQueueChan chan *RestQueue
-	RedisLocal2Cli      *redis.Client
-	RestQueueChan       chan *RestQueue
+	SeriesChan           chan *SeriesInfo
+	SegmentItemChan      chan *SegmentItem
+	MakeMaXsChan         chan *Candle
+	ShearForceGrpChan    chan *ShearForceGrp
+	InvokeRestQueueChan  chan *RestQueue
+	RestQueueChan        chan *RestQueue
 	RestQueue
 	WriteLogChan chan *WriteLog
+
+	// 降级为内部字段（后续可逐步移除）
+	RedisLocalCli  *redis.Client
+	RedisRemoteCli *redis.Client
+	RedisLocal2Cli *redis.Client
+	Cfg            *MyConfig
+}
+
+// 各模块接口定义
+type RedisConnector interface {
+	GetClient(options *redis.Options) (*redis.Client, error)
+	Ping(client *redis.Client) error
+}
+
+type ConfigProvider interface {
+	GetString(keyPath string) (string, error)
+	GetInt(keyPath string) (int, error)
+	GetBool(keyPath string) (bool, error)
+}
+
+type Logger interface {
+	Info(args ...interface{})
+	Error(args ...interface{})
+	Warn(args ...interface{})
+	Debug(args ...interface{})
+}
+
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
+type PipelineOperator interface {
+	CandlePipeline() chan *Candle
+	LogPipeline() chan *WriteLog
 }
 
 type RestQueue struct {
@@ -127,26 +164,28 @@ func WriteLogProcess(cr *Core) {
 // 	fmt.Println("serverSystem time:", rsp)
 // }
 
-func (core *Core) Init() {
-	core.Env = os.Getenv("GO_ENV")
-	gitBranch := os.Getenv("gitBranchName")
-	commitID := os.Getenv("gitCommitID")
-
-	logrus.Info("当前环境: ", core.Env)
-	logrus.Info("gitBranch: ", gitBranch)
-	logrus.Info("gitCommitID: ", commitID)
-	cfg := MyConfig{}
-	cfg, _ = cfg.Init()
-	core.Cfg = &cfg
-	cli, err := core.GetRedisLocalCli()
-	core.RedisLocalCli = cli
-	core.RestQueueChan = make(chan *RestQueue)
-	core.WriteLogChan = make(chan *WriteLog)
-	// 跟订单有关的都关掉
-	// core.OrderChan = make(chan *private.Order)
-	if err != nil {
-		logrus.Error("init redis client err: ", err)
+func NewCore(
+	config ConfigProvider,
+	redisConn RedisConnector,
+	httpClient HTTPClient,
+	logger Logger,
+) *Core {
+	core := &Core{
+		Config:        config,
+		Redis:         redisConn,
+		HTTPClient:    httpClient,
+		Logger:        logger,
+		RestQueueChan: make(chan *RestQueue),
+		WriteLogChan:  make(chan *WriteLog),
 	}
+
+	core.Env = os.Getenv("GO_ENV")
+	core.FluentBitUrl = os.Getenv("SARDINE_FluentBitUrl")
+
+	logger.Info("当前环境: ", core.Env)
+	logger.Info("FluentBit地址: ", core.FluentBitUrl)
+
+	return core
 }
 
 func (core *Core) GetRedisCliFromConf(conf RedisConfig) (*redis.Client, error) {
